@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Channel Manager</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="topbar">
+      <div>
+        <p class="small">ADMIN DASHBOARD</p>
+        <h1>Channel Manager</h1>
+      </div>
+      <div class="status">● Online</div>
+    </header>
+
+    <section class="channel-card">
+      <div class="channel-icon">N</div>
+      <div>
+        <h2>Nothing Forever</h2>
+        <p>@nothing_ls_forever</p>
+      </div>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card">
+        <span>Obunachilar</span>
+        <strong id="subscribers">—</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Postlar</span>
+        <strong id="posts">—</strong>
+      </div>
+    </section>
+
+    <h3>Boshqaruv</h3>
+
+    <div class="menu-grid">
+      <button class="menu-btn" data-page="publish">
+        <span>📤</span>
+        <b>Post joylash</b>
+        <small>Yangi post yuborish</small>
+      </button>
+
+      <button class="menu-btn" data-page="posts">
+        <span>📝</span>
+        <b>Postlar</b>
+        <small>Tahrirlash va o‘chirish</small>
+      </button>
+
+      <button class="menu-btn" data-page="stats">
+        <span>📊</span>
+        <b>Statistika</b>
+        <small>Kanal ko‘rsatkichlari</small>
+      </button>
+
+      <button class="menu-btn" data-page="settings">
+        <span>⚙️</span>
+        <b>Sozlamalar</b>
+        <small>Bot va kanal</small>
+      </button>
+    </div>
+
+    <section id="panel" class="panel">
+      <h3>Dashboard</h3>
+      <p>Kerakli bo‘limni tanlang.</p>
+    </section>
+
+    <footer>
+      <p>Channel Manager • Admin only</p>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
