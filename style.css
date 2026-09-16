@@ -1,0 +1,182 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
+  color: #17202a;
+}
+
+.app {
+  max-width: 760px;
+  margin: auto;
+  padding: 24px 18px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.small {
+  color: #718096;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+h1 {
+  font-size: 25px;
+  margin-top: 6px;
+}
+
+.status {
+  background: #e5f8ed;
+  color: #16804b;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.channel-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 5px 20px #17202a0d;
+}
+
+.channel-icon {
+  width: 60px;
+  height: 60px;
+  background: #17202a;
+  color: white;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.channel-card h2 {
+  font-size: 18px;
+}
+
+.channel-card p {
+  color: #718096;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 20px 0 28px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.stat-card span {
+  color: #718096;
+  font-size: 13px;
+}
+
+.stat-card strong {
+  display: block;
+  font-size: 28px;
+  margin-top: 8px;
+}
+
+h3 {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.menu-btn {
+  background: white;
+  border: 1px solid #e7ebef;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #17202a;
+}
+
+.menu-btn span {
+  display: block;
+  font-size: 27px;
+  margin-bottom: 14px;
+}
+
+.menu-btn b {
+  display: block;
+  font-size: 15px;
+}
+
+.menu-btn small {
+  display: block;
+  color: #718096;
+  margin-top: 6px;
+}
+
+.menu-btn:active {
+  transform: scale(0.97);
+}
+
+.panel {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  margin-top: 24px;
+  min-height: 100px;
+}
+
+.panel p {
+  color: #718096;
+  line-height: 1.6;
+}
+
+footer {
+  text-align: center;
+  color: #9aa5b1;
+  font-size: 12px;
+  margin-top: 30px;
+}
+
+@media (max-width: 420px) {
+  .app {
+    padding: 18px 14px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .menu-grid {
+    gap: 10px;
+  }
+
+  .menu-btn {
+    padding: 15px;
+  }
+}
