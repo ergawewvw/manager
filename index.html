@@ -4,82 +4,434 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Channel Manager</title>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>Manager1 — Task Manager</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="app">
 
-    <header class="topbar">
-      <div>
-        <p class="small">ADMIN DASHBOARD</p>
-        <h1>Channel Manager</h1>
-      </div>
-      <div class="status">● Online</div>
-    </header>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-    <section class="channel-card">
-      <div class="channel-icon">N</div>
-      <div>
-        <h2>Nothing Forever</h2>
-        <p>@nothing_ls_forever</p>
-      </div>
-    </section>
-
-    <section class="stats">
-      <div class="stat-card">
-        <span>Obunachilar</span>
-        <strong id="subscribers">—</strong>
+      <div class="brand">
+        <div class="brand-icon">M</div>
+        <div>
+          <h2>Manager<span>1</span></h2>
+          <p>Task workspace</p>
+        </div>
       </div>
 
-      <div class="stat-card">
-        <span>Postlar</span>
-        <strong id="posts">—</strong>
+      <nav class="nav">
+        <p class="nav-label">MENU</p>
+
+        <button class="nav-item active" data-page="dashboard">
+          <span>⌂</span>
+          Dashboard
+        </button>
+
+        <button class="nav-item" data-page="tasks">
+          <span>✓</span>
+          My Tasks
+        </button>
+
+        <button class="nav-item" data-page="calendar">
+          <span>▣</span>
+          Calendar
+        </button>
+
+        <button class="nav-item" data-page="analytics">
+          <span>◈</span>
+          Analytics
+        </button>
+
+        <p class="nav-label">WORKSPACE</p>
+
+        <button class="nav-item" data-page="settings">
+          <span>⚙</span>
+          Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="upgrade-card">
+          <span>✦</span>
+          <h3>Stay organized</h3>
+          <p>Plan your work. Achieve your goals.</p>
+        </div>
+
+        <div class="profile-mini">
+          <div class="avatar">X</div>
+          <div>
+            <strong>Xumoyun</strong>
+            <p>Personal workspace</p>
+          </div>
+        </div>
       </div>
-    </section>
 
-    <h3>Boshqaruv</h3>
+    </aside>
 
-    <div class="menu-grid">
-      <button class="menu-btn" data-page="publish">
-        <span>📤</span>
-        <b>Post joylash</b>
-        <small>Yangi post yuborish</small>
-      </button>
+    <!-- MAIN CONTENT -->
+    <main class="main">
 
-      <button class="menu-btn" data-page="posts">
-        <span>📝</span>
-        <b>Postlar</b>
-        <small>Tahrirlash va o‘chirish</small>
-      </button>
+      <header class="topbar">
 
-      <button class="menu-btn" data-page="stats">
-        <span>📊</span>
-        <b>Statistika</b>
-        <small>Kanal ko‘rsatkichlari</small>
-      </button>
+        <button class="mobile-menu" id="mobileMenu">☰</button>
 
-      <button class="menu-btn" data-page="settings">
-        <span>⚙️</span>
-        <b>Sozlamalar</b>
-        <small>Bot va kanal</small>
-      </button>
+        <div class="page-heading">
+          <p class="eyebrow">WORKSPACE / OVERVIEW</p>
+          <h1 id="pageTitle">Good morning, Xumoyun.</h1>
+          <p id="pageSubtitle">Let's make today productive.</p>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-btn" id="themeToggle" title="Theme">
+            ☼
+          </button>
+
+          <div class="user-avatar">X</div>
+        </div>
+
+      </header>
+
+      <!-- DASHBOARD -->
+      <section id="dashboardPage" class="page active-page">
+
+        <div class="hero-row">
+          <div>
+            <h2>Your productivity</h2>
+            <p>Track your tasks and keep moving forward.</p>
+          </div>
+
+          <button class="primary-btn" id="addTaskBtn">
+            <span>+</span> New task
+          </button>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>Total tasks</span>
+              <div class="stat-icon purple">▤</div>
+            </div>
+            <strong id="totalTasks">0</strong>
+            <p><span class="neutral">All your tasks</span></p>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>Completed</span>
+              <div class="stat-icon green">✓</div>
+            </div>
+            <strong id="completedTasks">0</strong>
+            <p><span class="positive">Tasks finished</span></p>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>In progress</span>
+              <div class="stat-icon blue">◷</div>
+            </div>
+            <strong id="progressTasks">0</strong>
+            <p><span class="neutral">Work in progress</span></p>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>Pending</span>
+              <div class="stat-icon orange">!</div>
+            </div>
+            <strong id="pendingTasks">0</strong>
+            <p><span class="neutral">Waiting to start</span></p>
+          </div>
+
+        </div>
+
+        <!-- TASKS + PROGRESS -->
+        <div class="content-grid">
+
+          <div class="panel-card tasks-panel">
+
+            <div class="panel-heading">
+              <div>
+                <h2>Recent tasks</h2>
+                <p>Your latest activities</p>
+              </div>
+
+              <button class="text-btn" data-page="tasks">
+                View all →
+              </button>
+            </div>
+
+            <div id="recentTasks" class="task-list">
+              <div class="empty-state">
+                <div>✓</div>
+                <h3>No tasks yet</h3>
+                <p>Create your first task to get started.</p>
+                <button class="primary-btn" id="emptyAddBtn">
+                  + Create task
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="panel-card progress-panel">
+
+            <div class="panel-heading">
+              <div>
+                <h2>Overview</h2>
+                <p>Your progress</p>
+              </div>
+            </div>
+
+            <div class="progress-circle">
+              <div class="circle-inner">
+                <strong id="progressPercent">0%</strong>
+                <span>Completed</span>
+              </div>
+            </div>
+
+            <div class="progress-details">
+              <div>
+                <span class="dot purple-dot"></span>
+                Completed
+                <strong id="overviewCompleted">0</strong>
+              </div>
+
+              <div>
+                <span class="dot gray-dot"></span>
+                Remaining
+                <strong id="overviewRemaining">0</strong>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- TASKS PAGE -->
+      <section id="tasksPage" class="page">
+
+        <div class="hero-row">
+          <div>
+            <h2>My Tasks</h2>
+            <p>Manage all your tasks in one place.</p>
+          </div>
+
+          <button class="primary-btn" id="tasksAddBtn">
+            + New task
+          </button>
+        </div>
+
+        <div class="filter-bar">
+
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search tasks..."
+          >
+
+          <select id="statusFilter">
+            <option value="all">All status</option>
+            <option value="pending">Pending</option>
+            <option value="progress">In progress</option>
+            <option value="completed">Completed</option>
+          </select>
+
+          <select id="priorityFilter">
+            <option value="all">All priority</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <h2>All tasks</h2>
+              <p id="taskCountText">0 tasks</p>
+            </div>
+          </div>
+
+          <div id="allTasks" class="task-list"></div>
+        </div>
+
+      </section>
+
+      <!-- CALENDAR PAGE -->
+      <section id="calendarPage" class="page">
+
+        <div class="hero-row">
+          <div>
+            <h2>Calendar</h2>
+            <p>Keep track of your deadlines.</p>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <h2>Upcoming deadlines</h2>
+              <p>Your scheduled tasks</p>
+            </div>
+          </div>
+
+          <div id="calendarTasks" class="task-list"></div>
+        </div>
+
+      </section>
+
+      <!-- ANALYTICS PAGE -->
+      <section id="analyticsPage" class="page">
+
+        <div class="hero-row">
+          <div>
+            <h2>Analytics</h2>
+            <p>Understand your productivity.</p>
+          </div>
+        </div>
+
+        <div class="stats-grid analytics-stats">
+
+          <div class="stat-card">
+            <span>Completion rate</span>
+            <strong id="analyticsPercent">0%</strong>
+          </div>
+
+          <div class="stat-card">
+            <span>Total completed</span>
+            <strong id="analyticsCompleted">0</strong>
+          </div>
+
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <h2>Task distribution</h2>
+              <p>Current workspace statistics</p>
+            </div>
+          </div>
+
+          <div id="analyticsContent" class="analytics-content"></div>
+        </div>
+
+      </section>
+
+      <!-- SETTINGS PAGE -->
+      <section id="settingsPage" class="page">
+
+        <div class="hero-row">
+          <div>
+            <h2>Settings</h2>
+            <p>Customize your workspace.</p>
+          </div>
+        </div>
+
+        <div class="panel-card settings-card">
+          <h2>Workspace settings</h2>
+
+          <label>
+            Workspace name
+            <input type="text" id="workspaceName" value="Manager1">
+          </label>
+
+          <button class="primary-btn" id="saveSettings">
+            Save settings
+          </button>
+
+          <p id="settingsMessage"></p>
+        </div>
+
+      </section>
+
+      <footer>
+        <p>Manager1 • Personal productivity workspace</p>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- ADD TASK MODAL -->
+  <div class="modal-overlay" id="taskModal">
+
+    <div class="modal">
+
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">NEW TASK</p>
+          <h2>Create a task</h2>
+        </div>
+
+        <button class="close-btn" id="closeModal">×</button>
+      </div>
+
+      <form id="taskForm">
+
+        <label>
+          Task title
+          <input
+            type="text"
+            id="taskTitle"
+            placeholder="e.g. Finish website design"
+            required
+          >
+        </label>
+
+        <label>
+          Description
+          <textarea
+            id="taskDescription"
+            placeholder="Add a short description..."
+            rows="3"
+          ></textarea>
+        </label>
+
+        <div class="form-grid">
+
+          <label>
+            Priority
+            <select id="taskPriority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+
+          <label>
+            Deadline
+            <input type="date" id="taskDueDate">
+          </label>
+
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-btn" id="cancelModal">
+            Cancel
+          </button>
+
+          <button type="submit" class="primary-btn">
+            Create task
+          </button>
+        </div>
+
+      </form>
+
     </div>
-
-    <section id="panel" class="panel">
-      <h3>Dashboard</h3>
-      <p>Kerakli bo‘limni tanlang.</p>
-    </section>
-
-    <footer>
-      <p>Channel Manager • Admin only</p>
-    </footer>
 
   </div>
 
   <script src="script.js"></script>
+
 </body>
 </html>
