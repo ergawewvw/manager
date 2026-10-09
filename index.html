@@ -3,271 +3,128 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1020">
-  <title>Daily Diary — Shaxsiy kundalik</title>
+  <title>Daily Diary</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #0b1020;
-      --panel: #121a2c;
-      --panel2: #192338;
-      --text: #edf2ff;
-      --muted: #929db5;
-      --accent: #8b7cff;
-      --border: #29334a;
-      --danger: #ff7385;
+      --bg:#0b1020; --panel:#121a2c; --soft:#1b263c;
+      --text:#eef2ff; --muted:#929db5; --border:#29344c;
+      --accent:#8978ff; --danger:#ff7588;
     }
-
-    * { box-sizing: border-box; }
-
+    * { box-sizing:border-box }
     body {
-      margin: 0;
-      font-family: Inter, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:Inter,system-ui,-apple-system,sans-serif;
     }
-
     body.light {
-      --bg: #f3f5fb;
-      --panel: #ffffff;
-      --panel2: #edf0fa;
-      --text: #202842;
-      --muted: #737e98;
-      --accent: #6957e8;
-      --border: #e0e5f0;
-      --danger: #d7475d;
+      --bg:#f3f5fb; --panel:#fff; --soft:#edf0fa;
+      --text:#202842; --muted:#737e98; --border:#e0e5f0;
+      --accent:#6957e8; --danger:#d7475d;
     }
-
-    button, input, textarea { font: inherit; }
-
-    button { cursor: pointer; }
-
-    .app {
-      display: grid;
-      grid-template-columns: 235px minmax(0, 1fr);
-      min-height: 100vh;
+    button,input,textarea { font:inherit }
+    button { cursor:pointer }
+    .hidden { display:none!important }
+    .layout { display:grid; grid-template-columns:230px minmax(0,1fr); min-height:100vh }
+    aside { padding:28px 17px; background:var(--panel); border-right:1px solid var(--border) }
+    .brand { display:flex; align-items:center; gap:11px; margin-bottom:40px; padding:0 7px }
+    .logo { display:grid; place-items:center; width:43px; height:43px; border-radius:14px; background:var(--accent); color:white; font-weight:800; font-size:22px }
+    .brand h2 { margin:0; font-size:18px }
+    .brand p { margin:4px 0 0; color:var(--muted); font-size:12px }
+    .nav-label { color:var(--muted); font-size:11px; letter-spacing:1.5px; padding:0 10px; margin-bottom:12px }
+    .nav { display:block; width:100%; padding:13px; margin:5px 0; color:var(--muted); background:transparent; border:0; border-radius:10px; text-align:left }
+    .nav.active,.nav:hover { color:var(--text); background:var(--soft) }
+    main { padding:32px clamp(16px,4vw,55px); min-width:0; max-width:1500px; width:100%; margin:auto }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px }
+    h1 { margin:0; font-size:clamp(24px,3vw,34px) }
+    .muted,.hint { color:var(--muted) }
+    .top p { margin:8px 0 0 }
+    .btn { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:11px 15px; border-radius:10px }
+    .primary { background:var(--accent); border-color:var(--accent); color:white; font-weight:650 }
+    .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; margin-bottom:22px }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:21px; min-width:0 }
+    .stat-label { color:var(--muted); font-size:13px }
+    .stat-number { font-size:30px; font-weight:750; margin-top:13px }
+    .workspace { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:18px; align-items:start }
+    h2.section { margin:0 0 7px; font-size:18px }
+    .hint { font-size:13px; line-height:1.6; margin:0 0 18px }
+    label { display:block; color:var(--muted); font-size:13px; margin:12px 0 7px }
+    input,textarea { width:100%; padding:12px 13px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text); outline:none }
+    input:focus,textarea:focus { border-color:var(--accent) }
+    textarea { min-height:165px; resize:vertical; line-height:1.7 }
+    .actions { display:flex; gap:9px; flex-wrap:wrap; margin-top:14px }
+    .entry { background:var(--soft); border:1px solid var(--border); padding:15px; border-radius:12px; margin-top:12px }
+    .entry-head { display:flex; justify-content:space-between; gap:10px; align-items:start }
+    .entry h3 { font-size:15px; margin:0 0 7px; overflow-wrap:anywhere }
+    .entry-date { color:var(--muted); font-size:12px }
+    .entry-content { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.65; margin:12px 0 }
+    .small { border:0; padding:5px; background:transparent; color:var(--accent); font-size:12px }
+    .delete { color:var(--danger) }
+    .empty { text-align:center; color:var(--muted); padding:28px 8px }
+    .notice { font-size:12px; line-height:1.6; color:var(--muted); margin-top:16px }
+    .auth-wrap { min-height:100vh; display:grid; place-items:center; padding:20px }
+    .auth-card { width:min(100%,430px); padding:28px; background:var(--panel); border:1px solid var(--border); border-radius:19px }
+    .auth-card .brand { margin-bottom:25px }
+    .auth-card h1 { font-size:26px }
+    .auth-switch { color:var(--accent); background:none; border:0; padding:10px 0 }
+    #message { font-size:13px; line-height:1.5; margin-top:14px; overflow-wrap:anywhere }
+    .mobile-brand { display:none }
+    @media(max-width:900px) {
+      .layout { grid-template-columns:1fr }
+      aside { display:none }
+      .mobile-brand { display:flex; margin-bottom:22px }
+      .workspace { grid-template-columns:1fr }
+      main { padding:22px 15px }
     }
-
-    aside {
-      padding: 27px 18px;
-      border-right: 1px solid var(--border);
-      background: var(--panel);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 8px;
-      margin-bottom: 43px;
-    }
-
-    .logo {
-      width: 42px;
-      height: 42px;
-      display: grid;
-      place-items: center;
-      border-radius: 14px;
-      background: var(--accent);
-      color: white;
-      font-size: 21px;
-      font-weight: 800;
-    }
-
-    .brand h2 { margin: 0; font-size: 18px; }
-    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
-
-    .nav-label {
-      padding: 0 10px;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-size: 11px;
-      letter-spacing: 1.5px;
-    }
-
-    .nav-item {
-      width: 100%;
-      padding: 13px 12px;
-      margin-bottom: 7px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-align: left;
-      color: var(--muted);
-      background: transparent;
-      border: 0;
-      border-radius: 11px;
-    }
-
-    .nav-item.active, .nav-item:hover {
-      background: var(--panel2);
-      color: var(--text);
-    }
-
-    .nav-item.active { box-shadow: inset 3px 0 var(--accent); }
-
-    main { min-width: 0; padding: 34px 5%; }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 30px;
-    }
-
-    .topbar h1 { margin: 0; font-size: clamp(24px, 3vw, 32px); }
-    .muted { color: var(--muted); }
-    .topbar p { margin: 8px 0 0; }
-
-    .btn {
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      padding: 11px 15px;
-      border-radius: 10px;
-    }
-
-    .btn.primary {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-      font-weight: 650;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 17px;
-      margin-bottom: 25px;
-    }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 17px;
-      padding: 22px;
-      min-width: 0;
-    }
-
-    .stat-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .stat-icon {
-      background: var(--panel2);
-      padding: 9px;
-      border-radius: 10px;
-    }
-
-    .stat-number { font-size: 30px; font-weight: 750; margin-top: 17px; }
-    .section-title { margin: 0 0 7px; font-size: 18px; }
-    .section-desc { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
-
-    .workspace {
-      display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
-      gap: 20px;
-      align-items: start;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 13px 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg);
-      color: var(--text);
-      outline: none;
-      margin-bottom: 13px;
-    }
-
-    input:focus, textarea:focus { border-color: var(--accent); }
-    textarea { resize: vertical; min-height: 170px; line-height: 1.7; }
-    label { display: block; font-size: 13px; margin-bottom: 8px; color: var(--muted); }
-    .form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-    .entry {
-      border: 1px solid var(--border);
-      background: var(--panel2);
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-
-    .entry-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .entry h3 { margin: 0 0 7px; font-size: 15px; overflow-wrap: anywhere; }
-    .entry-date { color: var(--muted); font-size: 12px; }
-    .entry-content {
-      margin: 12px 0;
-      line-height: 1.65;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .entry-actions { display: flex; gap: 8px; }
-    .small-btn {
-      border: 0;
-      background: transparent;
-      color: var(--accent);
-      padding: 5px;
-      font-size: 12px;
-    }
-
-    .small-btn.delete { color: var(--danger); }
-    .empty { padding: 30px 10px; text-align: center; color: var(--muted); }
-    .notice { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 16px; }
-
-    .mobile-brand { display: none; }
-
-    @media (max-width: 850px) {
-      .app { grid-template-columns: 1fr; }
-      aside { display: none; }
-      .mobile-brand { display: flex; margin-bottom: 22px; }
-      main { padding: 22px 16px; }
-      .workspace { grid-template-columns: 1fr; }
-      .stats { gap: 10px; }
-      .stats .card { padding: 15px; }
-      .stat-number { font-size: 25px; }
-    }
-
-    @media (max-width: 480px) {
-      .stats { grid-template-columns: 1fr; }
-      .topbar { align-items: flex-start; }
-      .topbar h1 { font-size: 24px; }
-      .card { padding: 17px; }
+    @media(max-width:520px) {
+      .stats { grid-template-columns:1fr }
+      .stat-number { font-size:25px }
+      .top { align-items:flex-start }
+      .card { padding:16px }
     }
   </style>
 </head>
 <body>
-<div class="app">
+
+<!-- LOGIN / REGISTER -->
+<section id="authView" class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="logo">D</div>
+      <div><h2>Daily Diary</h2><p>Your personal space</p></div>
+    </div>
+    <h1 id="authTitle">Xush kelibsan 👋</h1>
+    <p class="hint" id="authHint">Kundaligingga kirish uchun hisobingga kir.</p>
+    <form id="authForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+      <label for="password">Parol</label>
+      <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Kamida 6 ta belgi" required>
+      <div class="actions">
+        <button class="btn primary" id="authSubmit" type="submit">Kirish</button>
+      </div>
+    </form>
+    <button class="auth-switch" id="switchAuth" type="button">Hisobing yo‘qmi? Ro‘yxatdan o‘t</button>
+    <div id="message" role="status"></div>
+    <p class="notice">Kundalik yozuvlari hisobingga bog‘lanadi. Parolingni hech kimga bermagin.</p>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<div id="appView" class="layout hidden">
   <aside>
     <div class="brand">
       <div class="logo">D</div>
-      <div>
-        <h2>Daily Diary</h2>
-        <p>Your personal space</p>
-      </div>
+      <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
     <div class="nav-label">MENU</div>
-    <button class="nav-item active" data-view="dashboard">◫ &nbsp; Dashboard</button>
-    <button class="nav-item" data-view="entries">▤ &nbsp; My entries</button>
-    <button class="nav-item" data-view="write">✎ &nbsp; Write today</button>
-    <button class="nav-item" id="themeBtn">☼ &nbsp; Theme</button>
-    <p class="notice">Shaxsiy fikrlaring va kundalik xotiralaring uchun joy.</p>
+    <button class="nav active" data-view="dashboard">◫ &nbsp; Dashboard</button>
+    <button class="nav" data-view="entries">▤ &nbsp; My entries</button>
+    <button class="nav" data-view="write">✎ &nbsp; Write today</button>
+    <button class="nav" id="themeBtn">☼ &nbsp; Theme</button>
+    <button class="nav" id="logoutBtn">↪ &nbsp; Chiqish</button>
+    <p class="notice" id="userLabel"></p>
   </aside>
 
   <main>
@@ -276,118 +133,193 @@
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
 
-    <header class="topbar">
+    <header class="top">
       <div>
-        <h1 id="pageTitle">Good morning 👋</h1>
+        <h1 id="pageTitle">Xush kelibsan 👋</h1>
         <p class="muted" id="todayLabel"></p>
       </div>
       <button class="btn primary" id="newBtn">＋ New entry</button>
     </header>
 
     <section class="stats">
-      <div class="card">
-        <div class="stat-top"><span>Total entries</span><span class="stat-icon">📝</span></div>
-        <div class="stat-number" id="totalStat">0</div>
-      </div>
-      <div class="card">
-        <div class="stat-top"><span>Written today</span><span class="stat-icon">📅</span></div>
-        <div class="stat-number" id="todayStat">0</div>
-      </div>
-      <div class="card">
-        <div class="stat-top"><span>This month</span><span class="stat-icon">✨</span></div>
-        <div class="stat-number" id="monthStat">0</div>
-      </div>
+      <div class="card"><div class="stat-label">Jami yozuvlar</div><div class="stat-number" id="totalStat">0</div></div>
+      <div class="card"><div class="stat-label">Bugungi yozuvlar</div><div class="stat-number" id="todayStat">0</div></div>
+      <div class="card"><div class="stat-label">Shu oy</div><div class="stat-number" id="monthStat">0</div></div>
     </section>
 
     <div class="workspace">
       <section class="card" id="editorCard">
-        <h2 class="section-title" id="editorTitle">Create an entry</h2>
-        <p class="section-desc">Bugungi fikrlaringni yozib qo‘y.</p>
-
+        <h2 class="section" id="editorTitle">Yangi yozuv</h2>
+        <p class="hint">Bugungi fikrlaringni yozib qo‘y.</p>
         <form id="entryForm">
-          <input type="hidden" id="editId">
-          <label for="entryTitle">Title</label>
+          <input id="editId" type="hidden">
+          <label for="entryTitle">Sarlavha</label>
           <input id="entryTitle" maxlength="120" placeholder="Bugungi kunim..." required>
-
-          <label for="entryDate">Date</label>
+          <label for="entryDate">Sana</label>
           <input id="entryDate" type="date" required>
-
-          <label for="entryContent">Your thoughts</label>
-          <textarea id="entryContent" maxlength="20000"
-            placeholder="Bugun nimalar bo‘ldi? Nimalarni his qilding?..." required></textarea>
-
-          <div class="form-actions">
-            <button class="btn primary" type="submit" id="saveBtn">Save entry</button>
-            <button class="btn" type="button" id="cancelBtn">Cancel</button>
+          <label for="entryContent">Kundalik</label>
+          <textarea id="entryContent" maxlength="20000" placeholder="Bugun nimalar bo‘ldi?..." required></textarea>
+          <div class="actions">
+            <button class="btn primary" id="saveBtn" type="submit">Saqlash</button>
+            <button class="btn" id="cancelBtn" type="button">Bekor qilish</button>
           </div>
+          <div id="saveMessage" class="notice" role="status"></div>
         </form>
-        <p class="notice">Hozircha yozuvlar shu brauzerda saqlanadi. Bu haqiqiy maxfiy saqlash yoki login tizimi emas.</p>
       </section>
 
       <section class="card" id="entriesCard">
-        <h2 class="section-title">Recent entries</h2>
-        <p class="section-desc">Oldingi yozuvlaring</p>
-        <input id="searchInput" placeholder="🔍 Search entries...">
-        <div id="entriesList"></div>
+        <h2 class="section">Yozuvlarim</h2>
+        <p class="hint">Saqlangan kundaliklaring</p>
+        <input id="searchInput" type="search" placeholder="🔍 Qidirish...">
+        <div id="entriesList"><div class="empty">Yuklanmoqda...</div></div>
       </section>
     </div>
   </main>
 </div>
 
 <script>
+(() => {
+  // Faqat Supabase Project URL va Publishable key kerak.
+  const SUPABASE_URL = "https://pmdgnhkbmarvtvfprdsy.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_XVoP3QTblvFdhjs157vaWQ_yXTaYtE8";
+
   const $ = id => document.getElementById(id);
-  const STORAGE_KEY = "daily_diary_entries_v1";
-  let entries = loadEntries();
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  function loadEntries() {
-    try {
-      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      return Array.isArray(data) ? data : [];
-    } catch {
-      return [];
-    }
+  let currentUser = null;
+  let entries = [];
+  let isRegister = false;
+  let busy = false;
+
+  function showMessage(text, error = false) {
+    $("message").textContent = text;
+    $("message").style.color = error ? "var(--danger)" : "var(--accent)";
   }
 
-  function persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  function showSaveMessage(text, error = false) {
+    $("saveMessage").textContent = text;
+    $("saveMessage").style.color = error ? "var(--danger)" : "var(--muted)";
   }
 
-  function localDate(date = new Date()) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+  function localDate() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
 
-  function escapeHTML(value = "") {
-    return String(value).replace(/[&<>"']/g, ch => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;",
-      '"': "&quot;", "'": "&#39;"
-    })[ch]);
+  function escapeHTML(s = "") {
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    })[c]);
   }
 
   function formatDate(value) {
-    if (!value) return "";
-    const [y, m, d] = value.split("-").map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString("uz-UZ", {
-      day: "numeric", month: "long", year: "numeric"
+    const [y,m,d] = value.split("-").map(Number);
+    return new Date(y,m-1,d).toLocaleDateString("uz-UZ", {
+      day:"numeric", month:"long", year:"numeric"
     });
+  }
+
+  function setAuthMode(register) {
+    isRegister = register;
+    $("authTitle").textContent = register ? "Hisob yaratish ✨" : "Xush kelibsan 👋";
+    $("authHint").textContent = register
+      ? "Email va parol bilan yangi hisob yarat."
+      : "Kundaligingga kirish uchun hisobingga kir.";
+    $("authSubmit").textContent = register ? "Ro‘yxatdan o‘tish" : "Kirish";
+    $("switchAuth").textContent = register
+      ? "Hisobing bormi? Kirish"
+      : "Hisobing yo‘qmi? Ro‘yxatdan o‘t";
+    $("password").autocomplete = register ? "new-password" : "current-password";
+    showMessage("");
+  }
+
+  $("switchAuth").addEventListener("click", () => setAuthMode(!isRegister));
+
+  $("authForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (busy) return;
+    busy = true;
+    $("authSubmit").disabled = true;
+    showMessage("Tekshirilmoqda...");
+
+    try {
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      const result = isRegister
+        ? await client.auth.signUp({ email, password })
+        : await client.auth.signInWithPassword({ email, password });
+
+      if (result.error) throw result.error;
+
+      if (isRegister && !result.data.session) {
+        showMessage("Hisob yaratildi. Email pochtangni tekshirib, tasdiqlash havolasini bos. Keyin login qil.");
+        return;
+      }
+
+      showMessage("Muvaffaqiyatli!");
+      await checkSession();
+    } catch (error) {
+      showMessage(error.message || "Xatolik yuz berdi.", true);
+    } finally {
+      busy = false;
+      $("authSubmit").disabled = false;
+    }
+  });
+
+  async function checkSession() {
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      showMessage(error.message, true);
+      return;
+    }
+
+    currentUser = data.session?.user || null;
+    $("authView").classList.toggle("hidden", !!currentUser);
+    $("appView").classList.toggle("hidden", !currentUser);
+
+    if (currentUser) {
+      $("userLabel").textContent = currentUser.email || "";
+      $("pageTitle").textContent = "Kundaligingga xush kelibsan 👋";
+      $("todayLabel").textContent = new Date().toLocaleDateString("uz-UZ", {
+        weekday:"long", day:"numeric", month:"long", year:"numeric"
+      });
+      await loadEntries();
+    }
+  }
+
+  async function loadEntries() {
+    $("entriesList").innerHTML = '<div class="empty">Yozuvlar yuklanmoqda...</div>';
+    const { data, error } = await client
+      .from("diary_entries")
+      .select("id,title,content,entry_date,created_at,updated_at")
+      .order("entry_date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      entries = [];
+      render();
+      $("entriesList").innerHTML =
+        `<div class="empty">Yuklashda xatolik: ${escapeHTML(error.message)}</div>`;
+      return;
+    }
+
+    entries = data || [];
+    render();
   }
 
   function renderStats() {
     const today = localDate();
-    const month = today.slice(0, 7);
+    const month = today.slice(0,7);
     $("totalStat").textContent = entries.length;
-    $("todayStat").textContent = entries.filter(e => e.date === today).length;
-    $("monthStat").textContent = entries.filter(e => e.date.startsWith(month)).length;
+    $("todayStat").textContent = entries.filter(e => e.entry_date === today).length;
+    $("monthStat").textContent = entries.filter(e => e.entry_date.startsWith(month)).length;
   }
 
   function renderEntries() {
-    const query = $("searchInput").value.trim().toLowerCase();
-    const filtered = [...entries]
-      .filter(e => `${e.title} ${e.content} ${e.date}`.toLowerCase().includes(query))
-      .sort((a, b) => b.date.localeCompare(a.date) ||
-        (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+    const q = $("searchInput").value.trim().toLowerCase();
+    const filtered = entries.filter(e =>
+      `${e.title} ${e.content} ${e.entry_date}`.toLowerCase().includes(q)
+    );
 
     if (!filtered.length) {
       $("entriesList").innerHTML =
@@ -400,11 +332,11 @@
         <div class="entry-head">
           <div>
             <h3>${escapeHTML(e.title)}</h3>
-            <div class="entry-date">${escapeHTML(formatDate(e.date))}</div>
+            <div class="entry-date">${escapeHTML(formatDate(e.entry_date))}</div>
           </div>
-          <div class="entry-actions">
-            <button class="small-btn" data-edit="${escapeHTML(e.id)}">Edit</button>
-            <button class="small-btn delete" data-delete="${escapeHTML(e.id)}">Delete</button>
+          <div>
+            <button class="small" data-edit="${e.id}">Tahrirlash</button>
+            <button class="small delete" data-delete="${e.id}">O‘chirish</button>
           </div>
         </div>
         <div class="entry-content">${escapeHTML(e.content)}</div>
@@ -421,70 +353,97 @@
     $("entryForm").reset();
     $("editId").value = "";
     $("entryDate").value = localDate();
-    $("editorTitle").textContent = "Create an entry";
-    $("saveBtn").textContent = "Save entry";
+    $("editorTitle").textContent = "Yangi yozuv";
+    $("saveBtn").textContent = "Saqlash";
+    showSaveMessage("");
   }
 
   function openEditor() {
-    $("editorCard").scrollIntoView({ behavior: "smooth", block: "start" });
-    $("entryTitle").focus({ preventScroll: true });
+    $("editorCard").scrollIntoView({ behavior:"smooth", block:"start" });
+    $("entryTitle").focus({ preventScroll:true });
   }
 
-  $("entryForm").addEventListener("submit", event => {
+  $("entryForm").addEventListener("submit", async event => {
     event.preventDefault();
+    if (!currentUser || busy) return;
 
     const title = $("entryTitle").value.trim();
     const content = $("entryContent").value.trim();
-    const date = $("entryDate").value;
+    const entry_date = $("entryDate").value;
     const id = $("editId").value;
 
-    if (!title || !content || !date) {
-      alert("Iltimos, barcha maydonlarni to‘ldir.");
+    if (!title || !content || !entry_date) {
+      showSaveMessage("Barcha maydonlarni to‘ldir.", true);
       return;
     }
 
-    const now = new Date().toISOString();
+    busy = true;
+    $("saveBtn").disabled = true;
+    showSaveMessage("Saqlanmoqda...");
 
-    if (id) {
-      const index = entries.findIndex(e => e.id === id);
-      if (index !== -1) entries[index] = { ...entries[index], title, content, date, updatedAt: now };
-    } else {
-      entries.push({
-        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
-        title, content, date, createdAt: now, updatedAt: now
-      });
+    try {
+      let result;
+
+      if (id) {
+        result = await client.from("diary_entries")
+          .update({ title, content, entry_date, updated_at: new Date().toISOString() })
+          .eq("id", Number(id))
+          .select();
+      } else {
+        result = await client.from("diary_entries")
+          .insert({ title, content, entry_date, user_id: currentUser.id })
+          .select();
+      }
+
+      if (result.error) throw result.error;
+      if (!result.data || result.data.length === 0) {
+        throw new Error("Yozuv o‘zgarmadi. Ruxsatlar yoki yozuv egasini tekshir.");
+      }
+
+      resetForm();
+      await loadEntries();
+      showSaveMessage("Yozuv Supabase'da saqlandi ✓");
+    } catch (error) {
+      showSaveMessage(error.message || "Saqlashda xatolik yuz berdi.", true);
+    } finally {
+      busy = false;
+      $("saveBtn").disabled = false;
     }
-
-    persist();
-    render();
-    resetForm();
-    $("pageTitle").textContent = "All your memories ✨";
   });
 
-  $("entriesList").addEventListener("click", event => {
-    const editButton = event.target.closest("[data-edit]");
-    const deleteButton = event.target.closest("[data-delete]");
+  $("entriesList").addEventListener("click", async event => {
+    const edit = event.target.closest("[data-edit]");
+    const del = event.target.closest("[data-delete]");
 
-    if (editButton) {
-      const entry = entries.find(e => e.id === editButton.dataset.edit);
+    if (edit) {
+      const entry = entries.find(e => e.id === Number(edit.dataset.edit));
       if (!entry) return;
       $("editId").value = entry.id;
       $("entryTitle").value = entry.title;
       $("entryContent").value = entry.content;
-      $("entryDate").value = entry.date;
-      $("editorTitle").textContent = "Edit entry";
-      $("saveBtn").textContent = "Update entry";
+      $("entryDate").value = entry.entry_date;
+      $("editorTitle").textContent = "Yozuvni tahrirlash";
+      $("saveBtn").textContent = "Yangilash";
       openEditor();
     }
 
-    if (deleteButton) {
-      const entry = entries.find(e => e.id === deleteButton.dataset.delete);
+    if (del) {
+      const id = Number(del.dataset.delete);
+      const entry = entries.find(e => e.id === id);
       if (!entry || !confirm(`"${entry.title}" yozuvini o‘chirasanmi?`)) return;
-      entries = entries.filter(e => e.id !== entry.id);
-      persist();
-      render();
+
+      del.disabled = true;
+      const { error } = await client.from("diary_entries").delete().eq("id", id);
+      if (error) {
+        alert("O‘chirishda xatolik: " + error.message);
+        del.disabled = false;
+        return;
+      }
+      await loadEntries();
     }
   });
+
+  $("searchInput").addEventListener("input", renderEntries);
 
   $("newBtn").addEventListener("click", () => {
     resetForm();
@@ -492,45 +451,60 @@
   });
 
   $("cancelBtn").addEventListener("click", resetForm);
-  $("searchInput").addEventListener("input", renderEntries);
 
   document.querySelectorAll("[data-view]").forEach(button => {
     button.addEventListener("click", () => {
       document.querySelectorAll("[data-view]").forEach(b => b.classList.remove("active"));
       button.classList.add("active");
 
-      const view = button.dataset.view;
-      if (view === "write") {
+      if (button.dataset.view === "write") {
         resetForm();
         openEditor();
-      } else if (view === "entries") {
-        $("entriesCard").scrollIntoView({ behavior: "smooth" });
+      } else if (button.dataset.view === "entries") {
+        $("entriesCard").scrollIntoView({ behavior:"smooth" });
       } else {
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top:0, behavior:"smooth" });
       }
     });
   });
 
-  $("themeBtn").addEventListener("click", () => {
-    document.body.classList.toggle("light");
-    localStorage.setItem("daily_diary_theme",
-      document.body.classList.contains("light") ? "light" : "dark");
-  });
-
-  if (localStorage.getItem("daily_diary_theme") === "light") {
-    document.body.classList.add("light");
+  function setTheme(light) {
+    document.body.classList.toggle("light", light);
+    localStorage.setItem("daily_diary_theme", light ? "light" : "dark");
   }
 
-  const hour = new Date().getHours();
-  $("pageTitle").textContent = hour < 12 ? "Good morning 👋" :
-    hour < 18 ? "Good afternoon 👋" : "Good evening 👋";
-
-  $("todayLabel").textContent = new Date().toLocaleDateString("uz-UZ", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  $("themeBtn").addEventListener("click", () => {
+    setTheme(!document.body.classList.contains("light"));
   });
 
+  $("logoutBtn").addEventListener("click", async () => {
+    const { error } = await client.auth.signOut();
+    if (error) {
+      alert("Chiqishda xatolik: " + error.message);
+      return;
+    }
+    entries = [];
+    resetForm();
+    await checkSession();
+  });
+
+  client.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user || null;
+    $("authView").classList.toggle("hidden", !!currentUser);
+    $("appView").classList.toggle("hidden", !currentUser);
+    if (currentUser) {
+      $("userLabel").textContent = currentUser.email || "";
+      setTimeout(() => loadEntries(), 0);
+    } else {
+      entries = [];
+      render();
+    }
+  });
+
+  setTheme(localStorage.getItem("daily_diary_theme") === "light");
   resetForm();
-  render();
+  checkSession();
+})();
 </script>
 </body>
 </html>
