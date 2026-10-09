@@ -4,434 +4,533 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1020">
+  <title>Daily Diary — Shaxsiy kundalik</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a2c;
+      --panel2: #192338;
+      --text: #edf2ff;
+      --muted: #929db5;
+      --accent: #8b7cff;
+      --border: #29334a;
+      --danger: #ff7385;
+    }
 
-  <title>Manager1 — Task Manager</title>
+    * { box-sizing: border-box; }
 
-  <link rel="stylesheet" href="style.css">
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    body.light {
+      --bg: #f3f5fb;
+      --panel: #ffffff;
+      --panel2: #edf0fa;
+      --text: #202842;
+      --muted: #737e98;
+      --accent: #6957e8;
+      --border: #e0e5f0;
+      --danger: #d7475d;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 235px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      padding: 27px 18px;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 8px;
+      margin-bottom: 43px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--accent);
+      color: white;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .brand h2 { margin: 0; font-size: 18px; }
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+
+    .nav-label {
+      padding: 0 10px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+    }
+
+    .nav-item {
+      width: 100%;
+      padding: 13px 12px;
+      margin-bottom: 7px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 11px;
+    }
+
+    .nav-item.active, .nav-item:hover {
+      background: var(--panel2);
+      color: var(--text);
+    }
+
+    .nav-item.active { box-shadow: inset 3px 0 var(--accent); }
+
+    main { min-width: 0; padding: 34px 5%; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .topbar h1 { margin: 0; font-size: clamp(24px, 3vw, 32px); }
+    .muted { color: var(--muted); }
+    .topbar p { margin: 8px 0 0; }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: 11px 15px;
+      border-radius: 10px;
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      font-weight: 650;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 17px;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      padding: 22px;
+      min-width: 0;
+    }
+
+    .stat-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat-icon {
+      background: var(--panel2);
+      padding: 9px;
+      border-radius: 10px;
+    }
+
+    .stat-number { font-size: 30px; font-weight: 750; margin-top: 17px; }
+    .section-title { margin: 0 0 7px; font-size: 18px; }
+    .section-desc { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      margin-bottom: 13px;
+    }
+
+    input:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 170px; line-height: 1.7; }
+    label { display: block; font-size: 13px; margin-bottom: 8px; color: var(--muted); }
+    .form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .entry {
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .entry-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .entry h3 { margin: 0 0 7px; font-size: 15px; overflow-wrap: anywhere; }
+    .entry-date { color: var(--muted); font-size: 12px; }
+    .entry-content {
+      margin: 12px 0;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .entry-actions { display: flex; gap: 8px; }
+    .small-btn {
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      padding: 5px;
+      font-size: 12px;
+    }
+
+    .small-btn.delete { color: var(--danger); }
+    .empty { padding: 30px 10px; text-align: center; color: var(--muted); }
+    .notice { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 16px; }
+
+    .mobile-brand { display: none; }
+
+    @media (max-width: 850px) {
+      .app { grid-template-columns: 1fr; }
+      aside { display: none; }
+      .mobile-brand { display: flex; margin-bottom: 22px; }
+      main { padding: 22px 16px; }
+      .workspace { grid-template-columns: 1fr; }
+      .stats { gap: 10px; }
+      .stats .card { padding: 15px; }
+      .stat-number { font-size: 25px; }
+    }
+
+    @media (max-width: 480px) {
+      .stats { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; }
+      .topbar h1 { font-size: 24px; }
+      .card { padding: 17px; }
+    }
+  </style>
 </head>
 <body>
-
-  <div class="app">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-      <div class="brand">
-        <div class="brand-icon">M</div>
-        <div>
-          <h2>Manager<span>1</span></h2>
-          <p>Task workspace</p>
-        </div>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <div class="logo">D</div>
+      <div>
+        <h2>Daily Diary</h2>
+        <p>Your personal space</p>
       </div>
-
-      <nav class="nav">
-        <p class="nav-label">MENU</p>
-
-        <button class="nav-item active" data-page="dashboard">
-          <span>⌂</span>
-          Dashboard
-        </button>
-
-        <button class="nav-item" data-page="tasks">
-          <span>✓</span>
-          My Tasks
-        </button>
-
-        <button class="nav-item" data-page="calendar">
-          <span>▣</span>
-          Calendar
-        </button>
-
-        <button class="nav-item" data-page="analytics">
-          <span>◈</span>
-          Analytics
-        </button>
-
-        <p class="nav-label">WORKSPACE</p>
-
-        <button class="nav-item" data-page="settings">
-          <span>⚙</span>
-          Settings
-        </button>
-      </nav>
-
-      <div class="sidebar-bottom">
-        <div class="upgrade-card">
-          <span>✦</span>
-          <h3>Stay organized</h3>
-          <p>Plan your work. Achieve your goals.</p>
-        </div>
-
-        <div class="profile-mini">
-          <div class="avatar">X</div>
-          <div>
-            <strong>Xumoyun</strong>
-            <p>Personal workspace</p>
-          </div>
-        </div>
-      </div>
-
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main">
-
-      <header class="topbar">
-
-        <button class="mobile-menu" id="mobileMenu">☰</button>
-
-        <div class="page-heading">
-          <p class="eyebrow">WORKSPACE / OVERVIEW</p>
-          <h1 id="pageTitle">Good morning, Xumoyun.</h1>
-          <p id="pageSubtitle">Let's make today productive.</p>
-        </div>
-
-        <div class="top-actions">
-          <button class="icon-btn" id="themeToggle" title="Theme">
-            ☼
-          </button>
-
-          <div class="user-avatar">X</div>
-        </div>
-
-      </header>
-
-      <!-- DASHBOARD -->
-      <section id="dashboardPage" class="page active-page">
-
-        <div class="hero-row">
-          <div>
-            <h2>Your productivity</h2>
-            <p>Track your tasks and keep moving forward.</p>
-          </div>
-
-          <button class="primary-btn" id="addTaskBtn">
-            <span>+</span> New task
-          </button>
-        </div>
-
-        <!-- STATS -->
-        <div class="stats-grid">
-
-          <div class="stat-card">
-            <div class="stat-top">
-              <span>Total tasks</span>
-              <div class="stat-icon purple">▤</div>
-            </div>
-            <strong id="totalTasks">0</strong>
-            <p><span class="neutral">All your tasks</span></p>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-top">
-              <span>Completed</span>
-              <div class="stat-icon green">✓</div>
-            </div>
-            <strong id="completedTasks">0</strong>
-            <p><span class="positive">Tasks finished</span></p>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-top">
-              <span>In progress</span>
-              <div class="stat-icon blue">◷</div>
-            </div>
-            <strong id="progressTasks">0</strong>
-            <p><span class="neutral">Work in progress</span></p>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-top">
-              <span>Pending</span>
-              <div class="stat-icon orange">!</div>
-            </div>
-            <strong id="pendingTasks">0</strong>
-            <p><span class="neutral">Waiting to start</span></p>
-          </div>
-
-        </div>
-
-        <!-- TASKS + PROGRESS -->
-        <div class="content-grid">
-
-          <div class="panel-card tasks-panel">
-
-            <div class="panel-heading">
-              <div>
-                <h2>Recent tasks</h2>
-                <p>Your latest activities</p>
-              </div>
-
-              <button class="text-btn" data-page="tasks">
-                View all →
-              </button>
-            </div>
-
-            <div id="recentTasks" class="task-list">
-              <div class="empty-state">
-                <div>✓</div>
-                <h3>No tasks yet</h3>
-                <p>Create your first task to get started.</p>
-                <button class="primary-btn" id="emptyAddBtn">
-                  + Create task
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          <div class="panel-card progress-panel">
-
-            <div class="panel-heading">
-              <div>
-                <h2>Overview</h2>
-                <p>Your progress</p>
-              </div>
-            </div>
-
-            <div class="progress-circle">
-              <div class="circle-inner">
-                <strong id="progressPercent">0%</strong>
-                <span>Completed</span>
-              </div>
-            </div>
-
-            <div class="progress-details">
-              <div>
-                <span class="dot purple-dot"></span>
-                Completed
-                <strong id="overviewCompleted">0</strong>
-              </div>
-
-              <div>
-                <span class="dot gray-dot"></span>
-                Remaining
-                <strong id="overviewRemaining">0</strong>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      <!-- TASKS PAGE -->
-      <section id="tasksPage" class="page">
-
-        <div class="hero-row">
-          <div>
-            <h2>My Tasks</h2>
-            <p>Manage all your tasks in one place.</p>
-          </div>
-
-          <button class="primary-btn" id="tasksAddBtn">
-            + New task
-          </button>
-        </div>
-
-        <div class="filter-bar">
-
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search tasks..."
-          >
-
-          <select id="statusFilter">
-            <option value="all">All status</option>
-            <option value="pending">Pending</option>
-            <option value="progress">In progress</option>
-            <option value="completed">Completed</option>
-          </select>
-
-          <select id="priorityFilter">
-            <option value="all">All priority</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-heading">
-            <div>
-              <h2>All tasks</h2>
-              <p id="taskCountText">0 tasks</p>
-            </div>
-          </div>
-
-          <div id="allTasks" class="task-list"></div>
-        </div>
-
-      </section>
-
-      <!-- CALENDAR PAGE -->
-      <section id="calendarPage" class="page">
-
-        <div class="hero-row">
-          <div>
-            <h2>Calendar</h2>
-            <p>Keep track of your deadlines.</p>
-          </div>
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-heading">
-            <div>
-              <h2>Upcoming deadlines</h2>
-              <p>Your scheduled tasks</p>
-            </div>
-          </div>
-
-          <div id="calendarTasks" class="task-list"></div>
-        </div>
-
-      </section>
-
-      <!-- ANALYTICS PAGE -->
-      <section id="analyticsPage" class="page">
-
-        <div class="hero-row">
-          <div>
-            <h2>Analytics</h2>
-            <p>Understand your productivity.</p>
-          </div>
-        </div>
-
-        <div class="stats-grid analytics-stats">
-
-          <div class="stat-card">
-            <span>Completion rate</span>
-            <strong id="analyticsPercent">0%</strong>
-          </div>
-
-          <div class="stat-card">
-            <span>Total completed</span>
-            <strong id="analyticsCompleted">0</strong>
-          </div>
-
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-heading">
-            <div>
-              <h2>Task distribution</h2>
-              <p>Current workspace statistics</p>
-            </div>
-          </div>
-
-          <div id="analyticsContent" class="analytics-content"></div>
-        </div>
-
-      </section>
-
-      <!-- SETTINGS PAGE -->
-      <section id="settingsPage" class="page">
-
-        <div class="hero-row">
-          <div>
-            <h2>Settings</h2>
-            <p>Customize your workspace.</p>
-          </div>
-        </div>
-
-        <div class="panel-card settings-card">
-          <h2>Workspace settings</h2>
-
-          <label>
-            Workspace name
-            <input type="text" id="workspaceName" value="Manager1">
-          </label>
-
-          <button class="primary-btn" id="saveSettings">
-            Save settings
-          </button>
-
-          <p id="settingsMessage"></p>
-        </div>
-
-      </section>
-
-      <footer>
-        <p>Manager1 • Personal productivity workspace</p>
-      </footer>
-
-    </main>
-
-  </div>
-
-  <!-- ADD TASK MODAL -->
-  <div class="modal-overlay" id="taskModal">
-
-    <div class="modal">
-
-      <div class="modal-header">
-        <div>
-          <p class="eyebrow">NEW TASK</p>
-          <h2>Create a task</h2>
-        </div>
-
-        <button class="close-btn" id="closeModal">×</button>
-      </div>
-
-      <form id="taskForm">
-
-        <label>
-          Task title
-          <input
-            type="text"
-            id="taskTitle"
-            placeholder="e.g. Finish website design"
-            required
-          >
-        </label>
-
-        <label>
-          Description
-          <textarea
-            id="taskDescription"
-            placeholder="Add a short description..."
-            rows="3"
-          ></textarea>
-        </label>
-
-        <div class="form-grid">
-
-          <label>
-            Priority
-            <select id="taskPriority">
-              <option value="low">Low</option>
-              <option value="medium" selected>Medium</option>
-              <option value="high">High</option>
-            </select>
-          </label>
-
-          <label>
-            Deadline
-            <input type="date" id="taskDueDate">
-          </label>
-
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="secondary-btn" id="cancelModal">
-            Cancel
-          </button>
-
-          <button type="submit" class="primary-btn">
-            Create task
-          </button>
-        </div>
-
-      </form>
-
+    </div>
+    <div class="nav-label">MENU</div>
+    <button class="nav-item active" data-view="dashboard">◫ &nbsp; Dashboard</button>
+    <button class="nav-item" data-view="entries">▤ &nbsp; My entries</button>
+    <button class="nav-item" data-view="write">✎ &nbsp; Write today</button>
+    <button class="nav-item" id="themeBtn">☼ &nbsp; Theme</button>
+    <p class="notice">Shaxsiy fikrlaring va kundalik xotiralaring uchun joy.</p>
+  </aside>
+
+  <main>
+    <div class="brand mobile-brand">
+      <div class="logo">D</div>
+      <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
 
-  </div>
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">Good morning 👋</h1>
+        <p class="muted" id="todayLabel"></p>
+      </div>
+      <button class="btn primary" id="newBtn">＋ New entry</button>
+    </header>
 
-  <script src="script.js"></script>
+    <section class="stats">
+      <div class="card">
+        <div class="stat-top"><span>Total entries</span><span class="stat-icon">📝</span></div>
+        <div class="stat-number" id="totalStat">0</div>
+      </div>
+      <div class="card">
+        <div class="stat-top"><span>Written today</span><span class="stat-icon">📅</span></div>
+        <div class="stat-number" id="todayStat">0</div>
+      </div>
+      <div class="card">
+        <div class="stat-top"><span>This month</span><span class="stat-icon">✨</span></div>
+        <div class="stat-number" id="monthStat">0</div>
+      </div>
+    </section>
 
+    <div class="workspace">
+      <section class="card" id="editorCard">
+        <h2 class="section-title" id="editorTitle">Create an entry</h2>
+        <p class="section-desc">Bugungi fikrlaringni yozib qo‘y.</p>
+
+        <form id="entryForm">
+          <input type="hidden" id="editId">
+          <label for="entryTitle">Title</label>
+          <input id="entryTitle" maxlength="120" placeholder="Bugungi kunim..." required>
+
+          <label for="entryDate">Date</label>
+          <input id="entryDate" type="date" required>
+
+          <label for="entryContent">Your thoughts</label>
+          <textarea id="entryContent" maxlength="20000"
+            placeholder="Bugun nimalar bo‘ldi? Nimalarni his qilding?..." required></textarea>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit" id="saveBtn">Save entry</button>
+            <button class="btn" type="button" id="cancelBtn">Cancel</button>
+          </div>
+        </form>
+        <p class="notice">Hozircha yozuvlar shu brauzerda saqlanadi. Bu haqiqiy maxfiy saqlash yoki login tizimi emas.</p>
+      </section>
+
+      <section class="card" id="entriesCard">
+        <h2 class="section-title">Recent entries</h2>
+        <p class="section-desc">Oldingi yozuvlaring</p>
+        <input id="searchInput" placeholder="🔍 Search entries...">
+        <div id="entriesList"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const STORAGE_KEY = "daily_diary_entries_v1";
+  let entries = loadEntries();
+
+  function loadEntries() {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function persist() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }
+
+  function localDate(date = new Date()) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function escapeHTML(value = "") {
+    return String(value).replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;",
+      '"': "&quot;", "'": "&#39;"
+    })[ch]);
+  }
+
+  function formatDate(value) {
+    if (!value) return "";
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("uz-UZ", {
+      day: "numeric", month: "long", year: "numeric"
+    });
+  }
+
+  function renderStats() {
+    const today = localDate();
+    const month = today.slice(0, 7);
+    $("totalStat").textContent = entries.length;
+    $("todayStat").textContent = entries.filter(e => e.date === today).length;
+    $("monthStat").textContent = entries.filter(e => e.date.startsWith(month)).length;
+  }
+
+  function renderEntries() {
+    const query = $("searchInput").value.trim().toLowerCase();
+    const filtered = [...entries]
+      .filter(e => `${e.title} ${e.content} ${e.date}`.toLowerCase().includes(query))
+      .sort((a, b) => b.date.localeCompare(a.date) ||
+        (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+
+    if (!filtered.length) {
+      $("entriesList").innerHTML =
+        '<div class="empty">📔<p>Hozircha yozuv yo‘q.</p><small>Birinchi kundalik yozuvingni yarat!</small></div>';
+      return;
+    }
+
+    $("entriesList").innerHTML = filtered.map(e => `
+      <article class="entry">
+        <div class="entry-head">
+          <div>
+            <h3>${escapeHTML(e.title)}</h3>
+            <div class="entry-date">${escapeHTML(formatDate(e.date))}</div>
+          </div>
+          <div class="entry-actions">
+            <button class="small-btn" data-edit="${escapeHTML(e.id)}">Edit</button>
+            <button class="small-btn delete" data-delete="${escapeHTML(e.id)}">Delete</button>
+          </div>
+        </div>
+        <div class="entry-content">${escapeHTML(e.content)}</div>
+      </article>
+    `).join("");
+  }
+
+  function render() {
+    renderStats();
+    renderEntries();
+  }
+
+  function resetForm() {
+    $("entryForm").reset();
+    $("editId").value = "";
+    $("entryDate").value = localDate();
+    $("editorTitle").textContent = "Create an entry";
+    $("saveBtn").textContent = "Save entry";
+  }
+
+  function openEditor() {
+    $("editorCard").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("entryTitle").focus({ preventScroll: true });
+  }
+
+  $("entryForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    const title = $("entryTitle").value.trim();
+    const content = $("entryContent").value.trim();
+    const date = $("entryDate").value;
+    const id = $("editId").value;
+
+    if (!title || !content || !date) {
+      alert("Iltimos, barcha maydonlarni to‘ldir.");
+      return;
+    }
+
+    const now = new Date().toISOString();
+
+    if (id) {
+      const index = entries.findIndex(e => e.id === id);
+      if (index !== -1) entries[index] = { ...entries[index], title, content, date, updatedAt: now };
+    } else {
+      entries.push({
+        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+        title, content, date, createdAt: now, updatedAt: now
+      });
+    }
+
+    persist();
+    render();
+    resetForm();
+    $("pageTitle").textContent = "All your memories ✨";
+  });
+
+  $("entriesList").addEventListener("click", event => {
+    const editButton = event.target.closest("[data-edit]");
+    const deleteButton = event.target.closest("[data-delete]");
+
+    if (editButton) {
+      const entry = entries.find(e => e.id === editButton.dataset.edit);
+      if (!entry) return;
+      $("editId").value = entry.id;
+      $("entryTitle").value = entry.title;
+      $("entryContent").value = entry.content;
+      $("entryDate").value = entry.date;
+      $("editorTitle").textContent = "Edit entry";
+      $("saveBtn").textContent = "Update entry";
+      openEditor();
+    }
+
+    if (deleteButton) {
+      const entry = entries.find(e => e.id === deleteButton.dataset.delete);
+      if (!entry || !confirm(`"${entry.title}" yozuvini o‘chirasanmi?`)) return;
+      entries = entries.filter(e => e.id !== entry.id);
+      persist();
+      render();
+    }
+  });
+
+  $("newBtn").addEventListener("click", () => {
+    resetForm();
+    openEditor();
+  });
+
+  $("cancelBtn").addEventListener("click", resetForm);
+  $("searchInput").addEventListener("input", renderEntries);
+
+  document.querySelectorAll("[data-view]").forEach(button => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-view]").forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+
+      const view = button.dataset.view;
+      if (view === "write") {
+        resetForm();
+        openEditor();
+      } else if (view === "entries") {
+        $("entriesCard").scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  });
+
+  $("themeBtn").addEventListener("click", () => {
+    document.body.classList.toggle("light");
+    localStorage.setItem("daily_diary_theme",
+      document.body.classList.contains("light") ? "light" : "dark");
+  });
+
+  if (localStorage.getItem("daily_diary_theme") === "light") {
+    document.body.classList.add("light");
+  }
+
+  const hour = new Date().getHours();
+  $("pageTitle").textContent = hour < 12 ? "Good morning 👋" :
+    hour < 18 ? "Good afternoon 👋" : "Good evening 👋";
+
+  $("todayLabel").textContent = new Date().toLocaleDateString("uz-UZ", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  });
+
+  resetForm();
+  render();
+</script>
 </body>
 </html>
