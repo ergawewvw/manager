@@ -34,7 +34,7 @@
     .brand p { margin:4px 0 0; color:var(--muted); font-size:12px }
     .nav-label { color:var(--muted); font-size:11px; letter-spacing:1.5px; padding:0 10px; margin-bottom:12px }
     .nav { display:block; width:100%; padding:13px; margin:5px 0; color:var(--muted); background:transparent; border:0; border-radius:10px; text-align:left }
-    .nav.active,.nav:hover { color:var(--text); background:var(--soft) }
+    .nav { text-decoration:none }\n    .nav.active,.nav:hover { color:var(--text); background:var(--soft) }
     main { padding:32px clamp(16px,4vw,55px); min-width:0; max-width:1500px; width:100%; margin:auto }
     .top { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px }
     h1 { margin:0; font-size:clamp(24px,3vw,34px) }
@@ -129,7 +129,7 @@
     <button class="nav" data-view="entries">▤ &nbsp; My entries</button>
     <button class="nav" data-view="write">✎ &nbsp; Write today</button>
     <a class="nav" href="./sharing.html">Mehmonlar / Ulashish</a>
-    <a class="nav" id="adminLink" href="./admin.html" hidden>Admin panel</a>
+    <a id="adminLink" href="./admin.html" class="nav hidden">Admin panel</a>
     <button class="nav" id="themeBtn">☼ &nbsp; Theme</button>
     <button class="nav" id="logoutBtn">↪ &nbsp; Chiqish</button>
     <p class="notice" id="userLabel"></p>
@@ -140,7 +140,7 @@
       <div class="logo">D</div>
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
       <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
-      <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
+      <a class="btn" href="./sharing.html">Mehmonlar</a>\n      <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>\n      <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
     </div>
 
     <header class="top">
@@ -201,6 +201,16 @@
   let isRegister = false;
   let busy = false;
   let fetchSequence = 0;
+  async function updateAdminUI() {
+    const authenticated = !!currentUser;
+    let allowed = false;
+    if (authenticated) {
+      const { data, error } = await client.rpc("am_i_diary_admin");
+      allowed = !error && data === true && !!currentUser;
+    }
+    $("adminLink").classList.toggle("hidden", !allowed);
+    $("mobileAdminLink").classList.toggle("hidden", !allowed);
+  }
 
   function showMessage(text, error = false) {
     $("message").textContent = text;
@@ -320,6 +330,9 @@
         weekday:"long", day:"numeric", month:"long", year:"numeric"
       });
       await loadEntries();
+      await updateAdminUI();
+    } else {
+      await updateAdminUI();
     }
   }
 
@@ -539,9 +552,11 @@
     $("appView").classList.toggle("hidden", !currentUser);
     if (currentUser) {
       $("userLabel").textContent = currentUser.email || "";
-      setTimeout(() => { if (currentUser) loadEntries(); }, 0);
+      setTimeout(() => { if (currentUser) { loadEntries(); updateAdminUI(); } }, 0);
     } else {
       fetchSequence++;
+      $("adminLink").classList.add("hidden");
+      $("mobileAdminLink").classList.add("hidden");
       entries = [];
       render();
     }
