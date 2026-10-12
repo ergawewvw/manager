@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Diary | Ulashish va mehmonlar</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{box-sizing:border-box} body{margin:0;background:#0b1020;color:#eef2ff;font:16px system-ui,sans-serif}
+    main{max-width:1150px;margin:auto;padding:25px 18px} a{color:#baafff}
+    h1{margin:15px 0} h2{font-size:19px} p,small{color:#aab6cf;line-height:1.6}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .panel{padding:22px;background:#131c30;border:1px solid #303b54;border-radius:16px;min-width:0}
+    input,select,button{font:inherit;width:100%;border-radius:9px;padding:11px;margin:6px 0 12px}
+    input,select{background:#0b1020;border:1px solid #3d4960;color:#fff}
+    button{background:#8978ff;color:#fff;border:0;cursor:pointer}
+    button:disabled{opacity:.5;cursor:default}.danger{background:#84394a}
+    .hidden{display:none!important}.notice{min-height:22px;white-space:pre-wrap;overflow-wrap:anywhere}
+    .key{font-family:ui-monospace,monospace;overflow-wrap:anywhere;color:#d1caff}
+    .paper{background:#1b263c;border:1px solid #3d4960;border-radius:10px;padding:14px;margin:10px 0;overflow-wrap:anywhere}
+    .paper p{color:#f0f0ff;white-space:pre-wrap}
+    .paper small{display:block}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body><main>
+  <a href="./index.html">← Kundalikka qaytish</a>
+  <h1>Ulashish va mehmonlar</h1>
+  <p>Faqat siz ruxsat bergan foydalanuvchilar kundaligingizni o‘qiy oladi. Ulashish kodini faqat ishonchli odamlarga bering.</p>
+  <p id="gate" role="status">Kirish tekshirilmoqda...</p>
+  <div id="app" class="grid hidden">
+    <section class="panel">
+      <h2>Kundaligimni ulashish</h2>
+      <p>Yangi kod eskisini va avvalgi mehmonlar ruxsatini bekor qiladi.</p>
+      <form id="shareForm">
+        <label for="alias">Kundalik nomi</label>
+        <input id="alias" autocomplete="off" required minlength="4" maxlength="32" pattern="[a-z0-9_-]{4,32}" placeholder="mening_kundaligim">
+        <label for="days">Ruxsat muddati</label>
+        <select id="days"><option value="1">1 kun</option><option value="7" selected>7 kun</option><option value="30">30 kun</option></select>
+        <button id="createBtn">Yangi kod yaratish</button>
+      </form>
+      <button id="revokeBtn" type="button" class="danger">Ulashishni to‘xtatish</button>
+      <p id="shareMessage" class="notice" role="status"></p>
+      <div id="keyBox" class="paper hidden">
+        <strong>Ulashish nomi:</strong> <span id="outAlias"></span>
+        <p><strong>Maxfiy kod:</strong> <span class="key" id="outCode"></span></p>
+        <button type="button" id="copyBtn">Nom va kodni nusxalash</button>
+        <small>Kodni saqlab qo‘ying — u faqat bir marta ko‘rsatiladi.</small>
+      </div>
+      <p id="shareInfo"></p>
+    </section>
+    <section class="panel">
+      <h2>Boshqa kundalikni ko‘rish</h2>
+      <p>Kundalik egasi yuborgan nom va maxfiy kodni kiriting.</p>
+      <form id="visitForm">
+        <label for="visitorAlias">Ulashish nomi</label>
+        <input id="visitorAlias" required maxlength="32" autocomplete="off">
+        <label for="visitorCode">Maxfiy kod</label>
+        <input id="visitorCode" type="password" required minlength="32" maxlength="32" autocomplete="off">
+        <button id="visitBtn">Ruxsat olish</button>
+      </form>
+      <p id="visitMessage" class="notice" role="status"></p>
+      <h2>Ruxsat berilgan kundaliklar</h2>
+      <div id="visitorsList"></div>
+      <div id="visitorNotes"></div>
+    </section>
+  </div>
+</main><script src="./sharing.js"></script></body></html>
