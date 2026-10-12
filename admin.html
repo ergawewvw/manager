@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Diary — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#eef2ff;font:16px system-ui,Arial,sans-serif}
+main{max-width:1000px;margin:auto;padding:32px 20px}h1{font-size:28px}p{color:#aeb6cc}
+.card{background:#151e31;border:1px solid #33405a;border-radius:18px;padding:24px;margin:18px 0}
+button,a{font:inherit}button,.link{background:#7665ed;color:white;border:0;border-radius:9px;padding:12px 16px;text-decoration:none;cursor:pointer}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;border-bottom:1px solid #33405a;word-break:break-word}
+#users{overflow-x:auto}.hidden{display:none}#status{min-height:26px}
+</style></head><body><main>
+<a href="./index.html" class="link">← Kundalikka qaytish</a>
+<h1>Administrator paneli</h1>
+<p>Foydalanuvchilar ro‘yxatini faqat tasdiqlangan administrator ko‘ra oladi. Maxfiy kundalik yozuvlari bu ro‘yxatda ko‘rsatilmaydi.</p>
+<section class="card" id="gate"><h2>Ruxsatni tekshirish</h2><p id="status">Tekshirilmoqda...</p></section>
+<section class="card hidden" id="dashboard"><h2>Foydalanuvchilar ro‘yxati</h2>
+<button id="refresh" type="button">Yangilash</button>
+<p id="counter"></p><div id="users">
+<table><thead><tr><th>Email</th><th>Ro‘yxatdan o‘tgan</th><th>Oxirgi kirish</th><th>Email tasdiqlanganmi?</th></tr></thead><tbody id="rows"></tbody></table>
+</div></section></main>
+<script>
+(async()=>{
+ const el=id=>document.getElementById(id);
+ const client=window.supabase.createClient("https://pmdgnhkbmarvtvfprdsy.supabase.co","sb_publishable_XVoP3QTblvFdhjs157vaWQ_yXTaYtE8");
+ try{
+  const {data:user,error:authError}=await client.auth.getUser();
+  if(authError||!user.user)throw new Error("Avval kundalik sahifasidan akkauntingizga kiring.");
+  const {data:admin,error:checkError}=await client.rpc("am_i_diary_admin");
+  if(checkError||admin!==true)throw new Error("Administrator huquqi yo‘q.");
+  el("gate").classList.add("hidden");el("dashboard").classList.remove("hidden");
+  async function refresh(){
+   el("counter").textContent="Yuklanmoqda...";
+   const {data,error}=await client.rpc("admin_diary_users");
+   el("rows").replaceChildren();
+   if(error){el("counter").textContent="Xatolik: "+error.message;return;}
+   el("counter").textContent=(data||[]).length+" ta foydalanuvchi";
+   for(const u of data||[]){
+    const tr=document.createElement("tr");
+    for(const val of [u.email||"—",u.joined_at?new Date(u.joined_at).toLocaleString("uz-UZ"):"—",u.last_seen_at?new Date(u.last_seen_at).toLocaleString("uz-UZ"):"—",u.email_verified?"Ha":"Yo‘q"]){
+     const td=document.createElement("td");td.textContent=val;tr.append(td);
+    }
+    el("rows").append(tr);
+   }
+  }
+  el("refresh").addEventListener("click",refresh);
+  await refresh();
+ }catch(err){el("status").textContent=err.message||"Ruxsat berilmadi.";}
+})();
+</script></body></html>
