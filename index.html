@@ -70,10 +70,12 @@
     .auth-switch { color:var(--accent); background:none; border:0; padding:10px 0 }
     #message { font-size:13px; line-height:1.5; margin-top:14px; overflow-wrap:anywhere }
     .mobile-brand { display:none }
+    .mobile-brand .btn { font-size:12px; padding:8px }
+    .mobile-brand .logo { flex-shrink:0 }
     @media(max-width:900px) {
       .layout { grid-template-columns:1fr }
       aside { display:none }
-      .mobile-brand { display:flex; margin-bottom:22px }
+      .mobile-brand { display:flex; margin-bottom:22px; flex-wrap:wrap }
       .workspace { grid-template-columns:1fr }
       main { padding:22px 15px }
     }
@@ -87,7 +89,7 @@
 </head>
 <body>
 
-<!-- LOGIN / REGISTER -->
+<!-- LOGIN ONLY -->
 <section id="authView" class="auth-wrap">
   <div class="auth-card">
     <div class="brand">
@@ -100,12 +102,12 @@
       <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
       <label for="password">Parol</label>
-      <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Kamida 6 ta belgi" required>
+      <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Parolingizni kiriting" required>
       <div class="actions">
         <button class="btn primary" id="authSubmit" type="submit">Kirish</button>
       </div>
     </form>
-    <button class="auth-switch" id="switchAuth" type="button">Hisobing yo‘qmi? Ro‘yxatdan o‘t</button>
+    
     <div id="message" role="status"></div>
     <p class="notice">Kundalik yozuvlari hisobingga bog‘lanadi. Parolingni hech kimga bermagin.</p>
   </div>
@@ -131,6 +133,8 @@
     <div class="brand mobile-brand">
       <div class="logo">D</div>
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
+      <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
+      <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
     </div>
 
     <header class="top">
@@ -188,8 +192,8 @@
 
   let currentUser = null;
   let entries = [];
-  let isRegister = false;
   let busy = false;
+  let fetchSequence = 0;
 
   function showMessage(text, error = false) {
     $("message").textContent = text;
@@ -219,22 +223,6 @@
     });
   }
 
-  function setAuthMode(register) {
-    isRegister = register;
-    $("authTitle").textContent = register ? "Hisob yaratish ✨" : "Xush kelibsan 👋";
-    $("authHint").textContent = register
-      ? "Email va parol bilan yangi hisob yarat."
-      : "Kundaligingga kirish uchun hisobingga kir.";
-    $("authSubmit").textContent = register ? "Ro‘yxatdan o‘tish" : "Kirish";
-    $("switchAuth").textContent = register
-      ? "Hisobing bormi? Kirish"
-      : "Hisobing yo‘qmi? Ro‘yxatdan o‘t";
-    $("password").autocomplete = register ? "new-password" : "current-password";
-    showMessage("");
-  }
-
-  $("switchAuth").addEventListener("click", () => setAuthMode(!isRegister));
-
   $("authForm").addEventListener("submit", async event => {
     event.preventDefault();
     if (busy) return;
@@ -245,16 +233,9 @@
     try {
       const email = $("email").value.trim();
       const password = $("password").value;
-      const result = isRegister
-        ? await client.auth.signUp({ email, password })
-        : await client.auth.signInWithPassword({ email, password });
+      const result = await client.auth.signInWithPassword({ email, password });
 
       if (result.error) throw result.error;
-
-      if (isRegister && !result.data.session) {
-        showMessage("Hisob yaratildi. Email pochtangni tekshirib, tasdiqlash havolasini bos. Keyin login qil.");
-        return;
-      }
 
       showMessage("Muvaffaqiyatli!");
       await checkSession();
@@ -267,13 +248,13 @@
   });
 
   async function checkSession() {
-    const { data, error } = await client.auth.getSession();
+    const { data, error } = await client.auth.getUser();
     if (error) {
       showMessage(error.message, true);
       return;
     }
 
-    currentUser = data.session?.user || null;
+    currentUser = data.user || null;
     $("authView").classList.toggle("hidden", !!currentUser);
     $("appView").classList.toggle("hidden", !currentUser);
 
@@ -288,13 +269,18 @@
   }
 
   async function loadEntries() {
+    const seq = ++fetchSequence;
+    const ownerId = currentUser?.id;
+    if (!ownerId) return;
     $("entriesList").innerHTML = '<div class="empty">Yozuvlar yuklanmoqda...</div>';
     const { data, error } = await client
       .from("diary_entries")
       .select("id,title,content,entry_date,created_at,updated_at")
+      .eq("user_id", ownerId)
       .order("entry_date", { ascending: false })
       .order("created_at", { ascending: false });
 
+    if (seq !== fetchSequence || ownerId !== currentUser?.id) return;
     if (error) {
       entries = [];
       render();
@@ -388,6 +374,7 @@
         result = await client.from("diary_entries")
           .update({ title, content, entry_date, updated_at: new Date().toISOString() })
           .eq("id", Number(id))
+          .eq("user_id", currentUser.id)
           .select();
       } else {
         result = await client.from("diary_entries")
@@ -433,9 +420,9 @@
       if (!entry || !confirm(`"${entry.title}" yozuvini o‘chirasanmi?`)) return;
 
       del.disabled = true;
-      const { error } = await client.from("diary_entries").delete().eq("id", id);
-      if (error) {
-        alert("O‘chirishda xatolik: " + error.message);
+      const { error, data } = await client.from("diary_entries").delete().eq("id", id).eq("user_id", currentUser.id).select("id");
+      if (error || !data?.length) {
+        alert("O‘chirishda xatolik: " + (error?.message || "Yozuv topilmadi."));
         del.disabled = false;
         return;
       }
@@ -473,20 +460,23 @@
     localStorage.setItem("daily_diary_theme", light ? "light" : "dark");
   }
 
-  $("themeBtn").addEventListener("click", () => {
-    setTheme(!document.body.classList.contains("light"));
-  });
+  function toggleTheme() { setTheme(!document.body.classList.contains("light")); }
+  $("themeBtn").addEventListener("click", toggleTheme);
+  $("mobileThemeBtn").addEventListener("click", toggleTheme);
 
-  $("logoutBtn").addEventListener("click", async () => {
+  async function logout() {
     const { error } = await client.auth.signOut();
     if (error) {
       alert("Chiqishda xatolik: " + error.message);
       return;
     }
     entries = [];
+    fetchSequence++;
     resetForm();
     await checkSession();
-  });
+  }
+  $("logoutBtn").addEventListener("click", logout);
+  $("mobileLogoutBtn").addEventListener("click", logout);
 
   client.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
@@ -494,8 +484,9 @@
     $("appView").classList.toggle("hidden", !currentUser);
     if (currentUser) {
       $("userLabel").textContent = currentUser.email || "";
-      setTimeout(() => loadEntries(), 0);
+      setTimeout(() => { if (currentUser) loadEntries(); }, 0);
     } else {
+      fetchSequence++;
       entries = [];
       render();
     }
