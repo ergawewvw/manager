@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Daily Diary — Maxfiy mehmon</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#eef2ff;font-family:system-ui,Arial,sans-serif}
+main{max-width:900px;margin:auto;padding:30px 20px}
+a{color:#b4aaff}.card{background:#151d31;border:1px solid #303b52;border-radius:16px;padding:24px;margin:16px 0}
+h1{margin-top:20px;font-size:clamp(25px,4vw,37px)}p{color:#b5bdd1;line-height:1.65}
+input,button{font:inherit;width:100%;border-radius:10px;padding:13px;margin:9px 0}
+input{color:#fff;background:#0b1020;border:1px solid #3b4860}
+button{background:#8978ff;color:#fff;border:0;cursor:pointer}
+button:disabled{opacity:.6}.hidden{display:none}
+article{border:1px solid #34415b;background:#1b263c;border-radius:12px;padding:18px;margin:15px 0}
+article h2{font-size:19px;margin:0 0 7px;overflow-wrap:anywhere}
+article small{color:#aab6ce}
+article p{white-space:pre-wrap;overflow-wrap:anywhere;color:#eef2ff}
+#message{min-height:23px;font-size:14px}
+</style></head>
+<body><main>
+<a href="./index.html">← Asosiy sahifaga qaytish</a>
+<h1>Mehmon sifatida kundalik o‘qish</h1>
+<p>Faqat egasi sizga bergan nom va maxfiy kod orqali o‘qishingiz mumkin. Bu sahifada kundalikni o‘zgartirish yoki o‘chirish imkoniyati yo‘q.</p>
+<section class="card" id="accessCard">
+<form id="accessForm">
+<label for="alias">Kundalik nomi</label>
+<input id="alias" maxlength="32" minlength="4" pattern="[a-zA-Z0-9_-]{4,32}" autocomplete="off" required placeholder="Egasi bergan nom">
+<label for="code">Maxfiy ishonch kodi</label>
+<input id="code" type="password" minlength="32" maxlength="32" autocomplete="off" required placeholder="32 belgili maxfiy kod">
+<button id="openBtn" type="submit">Kundalikni ochish</button>
+</form>
+<div id="message" role="status" aria-live="polite"></div>
+</section>
+<section id="readSection" class="card hidden">
+<h2>O‘qishga ruxsat berilgan yozuvlar</h2>
+<button type="button" id="closeBtn">Kundalikni yopish</button>
+<div id="notes"></div>
+</section>
+</main><script src="./visitor.js"></script></body></html>
