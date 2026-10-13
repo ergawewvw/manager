@@ -90,7 +90,7 @@
 </head>
 <body>
 
-<!-- LOGIN / REGISTRATION -->
+<!-- PRIVATE OWNER LOGIN / GUEST CODE -->
 <section id="authView" class="auth-wrap">
   <div class="auth-card">
     <div class="brand">
@@ -98,23 +98,19 @@
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
     <h1 id="authTitle">Akkauntga kirish</h1>
-    <p class="hint" id="authHint">Email va parolingizni kiriting.</p>
+    <p class="hint" id="authHint">Bu shaxsiy kundalik. Faqat egasi email va parol bilan kiradi.</p>
     <form id="authForm">
       <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
       <label for="password">Parol</label>
       <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Parolingizni kiriting" required>
-      <div id="confirmPasswordGroup" class="hidden">
-        <label for="confirmPassword">Parolni tasdiqlash</label>
-        <input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Parolni qayta kiriting">
-      </div>
       <div class="actions">
         <button class="btn primary" id="authSubmit" type="submit">Kirish</button>
       </div>
     </form>
-    <button class="auth-switch" id="switchAuth" type="button">Yangi akkaunt yaratish</button>
+    <a class="btn" href="./visitor.html" style="display:block;text-align:center;margin-top:14px;text-decoration:none">Mehmon sifatida ishonch kodi bilan o‘qish</a>
     <div id="message" role="status" aria-live="polite"></div>
-    <p class="notice">Kundalik yozuvlari hisobingga bog‘lanadi. Parolingni hech kimga bermagin.</p>
+    <p class="notice">Yangi akkaunt yaratish yopiq. Mehmonlar faqat egasi bergan maxfiy kod bilan kundalikni o‘qiy oladi.</p>
   </div>
 </section>
 
@@ -129,7 +125,7 @@
     <button class="nav active" data-view="dashboard">◫ &nbsp; Dashboard</button>
     <button class="nav" data-view="entries">▤ &nbsp; My entries</button>
     <button class="nav" data-view="write">✎ &nbsp; Write today</button>
-    <a class="nav" href="./sharing.html">Mehmonlar / Ulashish</a>
+    <a class="nav" href="./sharing.html">Ishonch kodini boshqarish</a>
     <a id="adminLink" href="./admin.html" class="nav hidden">Admin panel</a>
     <button class="nav" id="themeBtn">☼ &nbsp; Theme</button>
     <button class="nav" id="logoutBtn">↪ &nbsp; Chiqish</button>
@@ -141,7 +137,7 @@
       <div class="logo">D</div>
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
       <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
-      <a class="btn" href="./sharing.html">Mehmonlar</a>\n      <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>\n      <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
+      <a class="btn" href="./sharing.html">Ishonch kodi</a>\n      <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>\n      <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
     </div>
 
     <header class="top">
@@ -199,7 +195,6 @@
 
   let currentUser = null;
   let entries = [];
-  let isRegister = false;
   let busy = false;
   let fetchSequence = 0;
   async function updateAdminUI() {
@@ -241,100 +236,57 @@
     });
   }
 
-  function setAuthMode(register) {
-    if (busy) return;
-    isRegister = register;
-    $("authTitle").textContent = register ? "Yangi akkaunt yaratish" : "Akkauntga kirish";
-    $("authHint").textContent = register
-      ? "Emailingiz va kamida 8 belgili parol tanlang."
-      : "Email va parolingizni kiriting.";
-    $("authSubmit").textContent = register ? "Ro‘yxatdan o‘tish" : "Kirish";
-    $("switchAuth").textContent = register
-      ? "Akkauntingiz bormi? Kirish"
-      : "Yangi akkaunt yaratish";
-    $("confirmPasswordGroup").classList.toggle("hidden", !register);
-    $("confirmPassword").required = register;
-    $("password").minLength = register ? 8 : 6;
-    $("password").autocomplete = register ? "new-password" : "current-password";
-    $("password").value = "";
-    $("confirmPassword").value = "";
-    showMessage("");
-  }
-
-  $("switchAuth").addEventListener("click", () => setAuthMode(!isRegister));
-
   $("authForm").addEventListener("submit", async event => {
     event.preventDefault();
     if (busy) return;
-
-    const registering = isRegister;
-    const email = $("email").value.trim();
-    const password = $("password").value;
-
-    if (registering) {
-      if (password.length < 8) {
-        showMessage("Parol kamida 8 ta belgidan iborat bo‘lishi kerak.", true);
-        return;
-      }
-      if (password !== $("confirmPassword").value) {
-        showMessage("Parollar bir-biriga mos kelmadi.", true);
-        return;
-      }
-    }
-
     busy = true;
     $("authSubmit").disabled = true;
-    $("switchAuth").disabled = true;
-    showMessage(registering ? "Akkaunt yaratilmoqda..." : "Tekshirilmoqda...");
-
+    showMessage("Tekshirilmoqda...");
     try {
-      const { data, error } = registering
-        ? await client.auth.signUp({ email, password })
-        : await client.auth.signInWithPassword({ email, password });
-
+      const { error } = await client.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
       if (error) throw error;
-
-      if (registering && !data.session) {
-        $("password").value = "";
-        $("confirmPassword").value = "";
-        showMessage("So‘rov qabul qilindi. Emailingizni tekshiring va tasdiqlash havolasi orqali akkauntni faollashtiring. Keyin kirishingiz mumkin.");
-        return;
-      }
-
       $("password").value = "";
-      $("confirmPassword").value = "";
       await checkSession();
     } catch (error) {
-      showMessage(error.message || "Xatolik yuz berdi.", true);
+      showMessage(error.message || "Kirishda xatolik yuz berdi.", true);
     } finally {
       busy = false;
       $("authSubmit").disabled = false;
-      $("switchAuth").disabled = false;
     }
   });
 
   async function checkSession() {
     const { data, error } = await client.auth.getUser();
-    if (error) {
-      showMessage(error.message, true);
+    if (error || !data?.user) {
+      currentUser = null;
+      $("authView").classList.remove("hidden");
+      $("appView").classList.add("hidden");
       return;
     }
 
-    currentUser = data.user || null;
-    $("authView").classList.toggle("hidden", !!currentUser);
-    $("appView").classList.toggle("hidden", !currentUser);
-
-    if (currentUser) {
-      $("userLabel").textContent = currentUser.email || "";
-      $("pageTitle").textContent = "Kundaligingga xush kelibsan 👋";
-      $("todayLabel").textContent = new Date().toLocaleDateString("uz-UZ", {
-        weekday:"long", day:"numeric", month:"long", year:"numeric"
-      });
-      await loadEntries();
-      await updateAdminUI();
-    } else {
-      await updateAdminUI();
+    const permission = await client.rpc("am_i_diary_admin");
+    if (permission.error || permission.data !== true) {
+      currentUser = null;
+      $("authView").classList.remove("hidden");
+      $("appView").classList.add("hidden");
+      await client.auth.signOut();
+      showMessage("Bu shaxsiy kundalik. Mehmon bo‘lsangiz, ishonch kodidan foydalaning.", true);
+      return;
     }
+
+    currentUser = data.user;
+    $("authView").classList.add("hidden");
+    $("appView").classList.remove("hidden");
+    $("userLabel").textContent = currentUser.email || "";
+    $("pageTitle").textContent = "Shaxsiy kundaligim";
+    $("todayLabel").textContent = new Date().toLocaleDateString("uz-UZ", {
+      weekday:"long", day:"numeric", month:"long", year:"numeric"
+    });
+    await loadEntries();
+    await updateAdminUI();
   }
 
   async function loadEntries() {
@@ -547,19 +499,19 @@
   $("logoutBtn").addEventListener("click", logout);
   $("mobileLogoutBtn").addEventListener("click", logout);
 
-  client.auth.onAuthStateChange((_event, session) => {
-    currentUser = session?.user || null;
-    $("authView").classList.toggle("hidden", !!currentUser);
-    $("appView").classList.toggle("hidden", !currentUser);
-    if (currentUser) {
-      $("userLabel").textContent = currentUser.email || "";
-      setTimeout(() => { if (currentUser) { loadEntries(); updateAdminUI(); } }, 0);
-    } else {
+  client.auth.onAuthStateChange((event, session) => {
+    if (!session) {
+      currentUser = null;
       fetchSequence++;
+      $("authView").classList.remove("hidden");
+      $("appView").classList.add("hidden");
       $("adminLink").classList.add("hidden");
       $("mobileAdminLink").classList.add("hidden");
       entries = [];
       render();
+    } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      // Never display private notes until server-side owner verification succeeds.
+      setTimeout(() => { checkSession(); }, 0);
     }
   });
 
