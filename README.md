@@ -22,3 +22,13 @@ Saytning **kirish sahifasi** internetda ochiq bo‘lishi mumkin; **kundalik yozu
 Supabase'ning o‘zida yangi foydalanuvchilar ro‘yxatdan o‘tishini ham butunlay o‘chirish uchun **Authentication → Settings → Allow new users to sign up** opsiyasini o‘chiring. Bu sozlama frontenddagi tugmani yashirishdan farq qiladi; sayt faqat mavjud owner akkauntini qabul qiladi.
 
 Sayt haqiqiy brauzerda va haqiqiy egasi login ma'lumotlari bilan boshidan oxirigacha sinovdan o‘tkazilmagan.
+
+## Sessiya va mehmon oynasini yopish
+
+Sessiya tugaganda yoki egasi hisobdan chiqqanda yozuvlar, tahrir oynasidagi saqlanmagan matn, qidiruv va hisob ma’lumotlari sahifadan tozalanadi. Eski login yoki saqlash so‘rovining kechikkan javobi yopilgan sessiya interfeysini qayta ochmaydi.
+
+Mehmon kodni tekshirish davomida ham “Kundalikni yopish / so‘rovni bekor qilish” tugmasidan foydalanishi mumkin. Bu amal sahifada natijani ko‘rsatishni bekor qiladi; serverga yuborilgan so‘rovni yoki egasi bergan kodni bekor qilmaydi.
+
+### Tekshirish
+
+Node.js 20+ bilan `node --test tests/privacy.cjs` buyrug‘ini bajaring. Testlar haqiqiy HTML/JS kodini soddalashtirilgan DOM va boshqariladigan Supabase javoblari bilan tekshiradi. Haqiqiy brauzer ko‘rinishi yoki jonli Supabase loginini tekshirmaydi.

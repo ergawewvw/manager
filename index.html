@@ -138,7 +138,9 @@
       <div class="logo">D</div>
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
       <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
-      <a class="btn" href="./sharing.html">Ishonch kodi</a>\n      <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>\n      <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
+      <a class="btn" href="./sharing.html">Ishonch kodi</a>
+      <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>
+      <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
     </div>
 
     <header class="top">
@@ -198,12 +200,32 @@
   let entries = [];
   let busy = false;
   let fetchSequence = 0;
+  let sessionSequence = 0;
+
+  function clearPrivateState() {
+    sessionSequence++;
+    fetchSequence++;
+    currentUser = null;
+    entries = [];
+    resetForm();
+    $("searchInput").value = "";
+    $("password").value = "";
+    $("userLabel").textContent = "";
+    $("authView").classList.remove("hidden");
+    $("appView").classList.add("hidden");
+    $("adminLink").classList.add("hidden");
+    $("mobileAdminLink").classList.add("hidden");
+    render();
+  }
   async function updateAdminUI() {
-    const authenticated = !!currentUser;
+    const ownerId = currentUser?.id;
+    const seq = sessionSequence;
+    const authenticated = !!ownerId;
     let allowed = false;
     if (authenticated) {
       const { data, error } = await client.rpc("am_i_diary_admin");
-      allowed = !error && data === true && !!currentUser;
+      if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
+      allowed = !error && data === true;
     }
     $("adminLink").classList.toggle("hidden", !allowed);
     $("mobileAdminLink").classList.toggle("hidden", !allowed);
@@ -260,19 +282,18 @@
   });
 
   async function checkSession() {
+    const seq = ++sessionSequence;
     const { data, error } = await client.auth.getUser();
+    if (seq !== sessionSequence) return;
     if (error || !data?.user) {
-      currentUser = null;
-      $("authView").classList.remove("hidden");
-      $("appView").classList.add("hidden");
+      clearPrivateState();
       return;
     }
 
     const permission = await client.rpc("am_i_diary_admin");
+    if (seq !== sessionSequence) return;
     if (permission.error || permission.data !== true) {
-      currentUser = null;
-      $("authView").classList.remove("hidden");
-      $("appView").classList.add("hidden");
+      clearPrivateState();
       await client.auth.signOut();
       showMessage("Bu shaxsiy kundalik. Mehmon bo‘lsangiz, ishonch kodidan foydalaning.", true);
       return;
@@ -287,6 +308,7 @@
       weekday:"long", day:"numeric", month:"long", year:"numeric"
     });
     await loadEntries();
+    if (seq !== sessionSequence) return;
     await updateAdminUI();
   }
 
@@ -385,6 +407,8 @@
       return;
     }
 
+    const ownerId = currentUser.id;
+    const seq = sessionSequence;
     busy = true;
     $("saveBtn").disabled = true;
     showSaveMessage("Saqlanmoqda...");
@@ -396,14 +420,15 @@
         result = await client.from("diary_entries")
           .update({ title, content, entry_date, updated_at: new Date().toISOString() })
           .eq("id", Number(id))
-          .eq("user_id", currentUser.id)
+          .eq("user_id", ownerId)
           .select();
       } else {
         result = await client.from("diary_entries")
-          .insert({ title, content, entry_date, user_id: currentUser.id })
+          .insert({ title, content, entry_date, user_id: ownerId })
           .select();
       }
 
+      if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
       if (result.error) throw result.error;
       if (!result.data || result.data.length === 0) {
         throw new Error("Yozuv o‘zgarmadi. Ruxsatlar yoki yozuv egasini tekshir.");
@@ -411,9 +436,12 @@
 
       resetForm();
       await loadEntries();
-      showSaveMessage("Yozuv Supabase'da saqlandi ✓");
+      if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
+      showSaveMessage("Yozuv saqlandi ✓");
     } catch (error) {
-      showSaveMessage(error.message || "Saqlashda xatolik yuz berdi.", true);
+      if (seq === sessionSequence && ownerId === currentUser?.id) {
+        showSaveMessage(error.message || "Saqlashda xatolik yuz berdi.", true);
+      }
     } finally {
       busy = false;
       $("saveBtn").disabled = false;
@@ -492,24 +520,14 @@
       alert("Chiqishda xatolik: " + error.message);
       return;
     }
-    entries = [];
-    fetchSequence++;
-    resetForm();
-    await checkSession();
+    clearPrivateState();
   }
   $("logoutBtn").addEventListener("click", logout);
   $("mobileLogoutBtn").addEventListener("click", logout);
 
   client.auth.onAuthStateChange((event, session) => {
     if (!session) {
-      currentUser = null;
-      fetchSequence++;
-      $("authView").classList.remove("hidden");
-      $("appView").classList.add("hidden");
-      $("adminLink").classList.add("hidden");
-      $("mobileAdminLink").classList.add("hidden");
-      entries = [];
-      render();
+      clearPrivateState();
     } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
       // Never display private notes until server-side owner verification succeeds.
       setTimeout(() => { checkSession(); }, 0);
