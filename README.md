@@ -50,6 +50,6 @@ Node.js 20+ bilan `node --test tests/privacy.cjs` buyrug‘ini bajaring. Testlar
 
 Avvaldan `diary_questions`da belgilangan savollar va SHA-256 javob xeshlari ishlatiladi; xeshlar mijozga yuborilmaydi. Javoblar bosh/oxir bo‘shliqlarsiz tekshiriladi; mavjud xeshlarga moslik uchun kichik harfga o‘tkazilgan va asl harfli variantlar qabul qilinadi. Bu mustaqil autentifikatsiya faktori (TOTP) emas, qo‘shimcha bilim tekshiruvidir.
 
-5 xato urinishdan keyin **shu ishonch kodi uchun barcha mehmonlar** 15 daqiqaga bloklanadi. Kod yangilansa yangi urinishlar oynasi boshlanadi. Kod va javoblar brauzer xotirasidagina ushlanadi; localStorage yoki URLga yozilmaydi. Yopishda ular tozalanadi. Avval o‘qib olingan matnni server qaytarib ola olmaydi.
+5 xato urinishdan keyin **shu ishonch kodi uchun barcha mehmonlar** kamida 24 soatga bloklanadi. Kod yangilansa yangi urinishlar oynasi boshlanadi. Kod va javoblar brauzer xotirasidagina ushlanadi; localStorage yoki URLga yozilmaydi. Yopishda ular tozalanadi. Avval o‘qib olingan matnni server qaytarib ola olmaydi.
 
 `db/guest_verification.sql` hosted Supabase uchun sxema o‘zgarishi. `db/test_guest_verification.sql` sun’iy ma’lumotlar va SQL assertlarini o‘z ichiga oladi; skript o‘zi `BEGIN` / `ROLLBACK` bilan tugaydi. Uni sxema qo‘llangandan keyin ishlating; vaqtinchalik savol xeshlari, kod va yozuv yakunda saqlanmaydi.

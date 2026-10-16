@@ -32,6 +32,7 @@ begin
     r := public.read_private_diary_verified('guest_verification_fixture',repeat('a',32),array['bad','bad','bad']);
   end loop;
   assert r->>'status'='blocked', 'Five failures did not block';
+  assert (r->>'blocked_until')::timestamptz>=now()+interval '24 hours', 'Lockout is shorter than one day';
   r := public.read_private_diary_verified('guest_verification_fixture',repeat('a',32),array['fixture-answer-1','fixture-answer-2','fixture-answer-3']);
   assert r->>'status'='blocked' and not(r ? 'entries'), 'Lockout bypassed';
 end $$;

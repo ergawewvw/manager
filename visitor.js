@@ -31,7 +31,7 @@
   }
   function resultMessage(data) {
     if (data?.status === "blocked") {
-      const until = new Date(data.blocked_until).toLocaleTimeString("uz-UZ");
+      const until = new Date(data.blocked_until).toLocaleString("uz-UZ");
       return `Urinishlar chegarasi tugadi. ${until} dan keyin qayta urinib ko‘ring.`;
     }
     if (data?.status === "invalid_answers") return `Javoblar noto‘g‘ri. Qolgan urinishlar: ${data.attempts_remaining}.`;

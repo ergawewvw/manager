@@ -96,7 +96,7 @@ begin
   if v_count<>3 or (select pg_catalog.count(distinct question_number) from public.diary_questions where question_number between 1 and 3)<>3 then return pg_catalog.jsonb_build_object('status','not_configured'); end if;
   if not v_ok then
     update diary_private.guest_answer_attempts set failed_attempts=least(failed_attempts+1,5),
-      blocked_until=case when failed_attempts+1>=5 then pg_catalog.now()+interval '15 minutes' else null end
+      blocked_until=case when failed_attempts+1>=5 then pg_catalog.now()+interval '24 hours' else null end
       where owner_id=v_owner returning * into v_attempt;
     -- Return instead of raising: failed attempts must commit even when verification fails.
     return pg_catalog.jsonb_build_object('status',case when v_attempt.blocked_until is not null then 'blocked' else 'invalid_answers' end,
