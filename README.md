@@ -53,3 +53,9 @@ Avvaldan `diary_questions`da belgilangan savollar va SHA-256 javob xeshlari ishl
 5 xato urinishdan keyin **shu ishonch kodi uchun barcha mehmonlar** kamida 24 soatga bloklanadi. Kod yangilansa yangi urinishlar oynasi boshlanadi. Kod va javoblar brauzer xotirasidagina ushlanadi; localStorage yoki URLga yozilmaydi. Yopishda ular tozalanadi. Avval o‘qib olingan matnni server qaytarib ola olmaydi.
 
 `db/guest_verification.sql` hosted Supabase uchun sxema o‘zgarishi. `db/test_guest_verification.sql` sun’iy ma’lumotlar va SQL assertlarini o‘z ichiga oladi; skript o‘zi `BEGIN` / `ROLLBACK` bilan tugaydi. Uni sxema qo‘llangandan keyin ishlating; vaqtinchalik savol xeshlari, kod va yozuv yakunda saqlanmaydi.
+
+### Javob yozilishlarini moslashtirish
+
+`db/normalize_guest_answers.sql` yangilanishi sanalarning matnli (iyun/June/июнь), raqamli kun-oy-yil va ISO yil-oy-kun shakllarini bir xil qiymatga aylantiradi. Ismlarda Unicode shakli, katta-kichik harf, bo‘shliq va tinish belgilari birxillashtiriladi. Noto‘g‘ri sana yoki boshqa ism qabul qilinmaydi. Eski javob xeshlari bilan moslik ham saqlanadi. Shaxsiy javoblar kodga yoki repozitoriyga yozilmaydi; ular alohida bazada xeshlanadi.
+
+`db/test_guest_normalization.sql` sinovlari sun’iy javoblar bilan o‘tadi va barcha o‘zgarishlarni rollback qiladi.

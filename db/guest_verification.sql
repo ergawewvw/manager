@@ -1,3 +1,46 @@
+-- Canonicalization only. Personal answers are set separately in the private database.
+create or replace function diary_private.normalize_guest_answer(p_question integer,p_answer text)
+returns text language plpgsql immutable security invoker set search_path='' as $$
+declare v text; parts text[]; day_value integer; month_value integer; year_value integer; date_value date;
+begin
+  if p_answer is null or pg_catalog.length(p_answer)>200 then return null; end if;
+  v := pg_catalog.lower(pg_catalog.normalize(p_answer,'NFKC'));
+  if p_question=3 then
+    v := pg_catalog.regexp_replace(v,'[[:space:][:punct:]]','','g');
+    return nullif(v,'');
+  end if;
+  if p_question not in (1,2) then return null; end if;
+  -- Uzbek, English and Russian June forms; separators and optional year labels vary.
+  v := pg_catalog.regexp_replace(v,'iyun|june|июня|июнь',' 6 ','g');
+  v := pg_catalog.regexp_replace(v,'yili?|years?|года?',' ','g');
+  if v ~ '[[:alpha:]]' then return null; end if;
+  v := pg_catalog.btrim(pg_catalog.regexp_replace(v,'[^0-9]+',' ','g'));
+  if v ~ '^[0-9]{8}$' then
+    if pg_catalog.substring(v,1,4)::integer between 1900 and 2199 then
+      parts := array[pg_catalog.substring(v,1,4),pg_catalog.substring(v,5,2),pg_catalog.substring(v,7,2)];
+    else
+      parts := array[pg_catalog.substring(v,1,2),pg_catalog.substring(v,3,2),pg_catalog.substring(v,5,4)];
+    end if;
+  else parts := pg_catalog.regexp_split_to_array(v,' +'); end if;
+  if pg_catalog.cardinality(parts)<>3 then return null; end if;
+  if pg_catalog.length(parts[1])=4 then
+    year_value := parts[1]::integer; month_value := parts[2]::integer; day_value := parts[3]::integer;
+  elsif pg_catalog.length(parts[3])=4 then
+    day_value := parts[1]::integer; month_value := parts[2]::integer; year_value := parts[3]::integer;
+    -- An unambiguous US numeric date (month/day/year) is accepted too.
+    if month_value>12 and day_value between 1 and 12 then
+      month_value := parts[1]::integer; day_value := parts[2]::integer;
+    end if;
+  else return null; end if;
+  if year_value not between 1900 and 2199 then return null; end if;
+  date_value := pg_catalog.make_date(year_value,month_value,day_value);
+  return pg_catalog.to_char(date_value,'YYYY-MM-DD');
+exception when datetime_field_overflow or invalid_text_representation or numeric_value_out_of_range then
+  return null;
+end;
+$$;
+revoke all on function diary_private.normalize_guest_answer(integer,text) from public,anon,authenticated;
+
 -- Hosted migration: guest_secret_questions. Existing question text/hashes are preserved.
 create table if not exists diary_private.guest_answer_attempts (
   owner_id uuid primary key references auth.users(id) on delete cascade,
@@ -86,10 +129,11 @@ begin
     if v_answer is null or pg_catalog.length(v_answer)<1 or pg_catalog.length(v_answer)>200 then
       v_ok := false;
     else
-      -- Preserve compatibility with existing SHA-256 hashes (normalized or case-sensitive).
+      -- Accept canonical equivalent dates/names and preserve legacy SHA-256 compatibility.
       if v_question.answer_hash is null or v_question.answer_hash !~ '^[0-9a-f]{64}$' or v_question.answer_hash not in (
         pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(pg_catalog.lower(pg_catalog.btrim(v_answer)),'UTF8')),'hex'),
-        pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(pg_catalog.btrim(v_answer),'UTF8')),'hex')
+        pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(pg_catalog.btrim(v_answer),'UTF8')),'hex'),
+        pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(coalesce(diary_private.normalize_guest_answer(v_question.question_number,v_answer),''),'UTF8')),'hex')
       ) then v_ok := false; end if;
     end if;
   end loop;
