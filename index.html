@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
+<link rel="icon" href="./favicon.ico?v=20261016">
+<link rel="icon" type="image/png" sizes="64x64" href="./assets/favicon.png?v=20261016">
 <meta name="robots" content="noindex,nofollow,noarchive">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,7 +37,7 @@
     .layout { display:grid; grid-template-columns:230px minmax(0,1fr); min-height:100vh }
     aside { padding:28px 17px; background:var(--panel); border-right:1px solid var(--border) }
     .brand { display:flex; align-items:center; gap:11px; margin-bottom:40px; padding:0 7px }
-    .logo { display:grid; place-items:center; width:43px; height:43px; border-radius:14px; background:var(--accent); color:white; font-weight:800; font-size:22px }
+    .logo { object-fit:contain; display:grid; place-items:center; width:43px; height:43px; border-radius:14px; background:transparent; color:white; font-weight:800; font-size:22px }
     .brand h2 { margin:0; font-size:18px }
     .brand p { margin:4px 0 0; color:var(--muted); font-size:12px }
     .nav-label { color:var(--muted); font-size:11px; letter-spacing:1.5px; padding:0 10px; margin-bottom:12px }
@@ -100,7 +102,7 @@
 <section id="authView" class="auth-wrap">
   <div class="auth-card">
     <div class="brand">
-      <div class="logo">D</div>
+      <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
     <h1 id="authTitle">Akkauntga kirish</h1>
@@ -124,7 +126,7 @@
 <div id="appView" class="layout hidden">
   <aside>
     <div class="brand">
-      <div class="logo">D</div>
+      <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
     <div class="nav-label">MENU</div>
@@ -140,7 +142,7 @@
 
   <main>
     <div class="brand mobile-brand">
-      <div class="logo">D</div>
+      <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
       <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
       <a class="btn" href="./sharing.html">Ishonch kodi</a>
