@@ -25,20 +25,26 @@ article p{white-space:pre-wrap;overflow-wrap:anywhere;color:#eef2ff}
 <body><main>
 <a href="./index.html">← Asosiy sahifaga qaytish</a>
 <h1>Mehmon sifatida kundalik o‘qish</h1>
-<p>Faqat egasi sizga bergan nom va maxfiy kod orqali o‘qishingiz mumkin. Bu sahifada kundalikni o‘zgartirish yoki o‘chirish imkoniyati yo‘q.</p>
+<p>Avval egasi bergan nom va ishonch kodini kiriting. Keyin egasi belgilagan 3 ta maxfiy savolga javob bering. Bu sahifada kundalikni o‘zgartirish yoki o‘chirish imkoniyati yo‘q.</p>
 <section class="card" id="accessCard">
 <form id="accessForm">
 <label for="alias">Kundalik nomi</label>
 <input id="alias" maxlength="32" minlength="4" pattern="[a-zA-Z0-9_-]{4,32}" autocomplete="off" required placeholder="Egasi bergan nom">
 <label for="code">Maxfiy ishonch kodi</label>
 <input id="code" type="password" minlength="32" maxlength="32" autocomplete="off" required placeholder="32 belgili maxfiy kod">
-<button id="openBtn" type="submit">Kundalikni ochish</button>
+<button id="openBtn" type="submit">1-bosqich: kodni tekshirish</button>
 </form>
+<form id="questionForm" class="hidden">
+<h2>2-bosqich: maxfiy savollar</h2>
+<p>Uchala javob ham to‘g‘ri bo‘lishi kerak. 5 ta xato urinishdan keyin bu kod uchun tekshiruv 15 daqiqaga to‘xtatiladi.</p>
+<div id="questionFields"></div>
+<button id="verifyBtn" type="submit">Javoblarni tekshirish va o‘qish</button>
+</form>
+<button type="button" id="closeBtn" class="hidden">Kundalikni yopish / so‘rovni bekor qilish</button>
 <div id="message" role="status" aria-live="polite"></div>
 </section>
 <section id="readSection" class="card hidden">
 <h2>O‘qishga ruxsat berilgan yozuvlar</h2>
-<button type="button" id="closeBtn">Kundalikni yopish</button>
 <div id="notes"></div>
 </section>
 </main><script src="./visitor.js"></script></body></html>

@@ -21,20 +21,25 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;bor
 <table><thead><tr><th>Email</th><th>Ro‘yxatdan o‘tgan</th><th>Oxirgi kirish</th><th>Email tasdiqlanganmi?</th></tr></thead><tbody id="rows"></tbody></table>
 </div></section></main>
 <script>
-(async()=>{
+(() => {
  const el=id=>document.getElementById(id);
  const client=window.supabase.createClient("https://pmdgnhkbmarvtvfprdsy.supabase.co","sb_publishable_XVoP3QTblvFdhjs157vaWQ_yXTaYtE8");
- try{
-  const {data:user,error:authError}=await client.auth.getUser();
-  if(authError||!user.user)throw new Error("Avval kundalik sahifasidan akkauntingizga kiring.");
-  const {data:admin,error:checkError}=await client.rpc("am_i_diary_admin");
-  if(checkError||admin!==true)throw new Error("Administrator huquqi yo‘q.");
-  el("gate").classList.add("hidden");el("dashboard").classList.remove("hidden");
-  async function refresh(){
-   el("counter").textContent="Yuklanmoqda...";
+ let generation=0, allowed=false, loading=false, ownerId=null;
+ function lock(){
+  generation++; allowed=false; ownerId=null; loading=false; el("refresh").disabled=false;
+  el("rows").replaceChildren(); el("counter").textContent="";
+  el("dashboard").classList.add("hidden"); el("gate").classList.remove("hidden");
+  el("status").textContent="Avval kundalik sahifasidan akkauntingizga kiring.";
+ }
+ async function refresh(){
+  if(!allowed||loading)return;
+  const seq=generation; loading=true; el("refresh").disabled=true;
+  el("counter").textContent="Yuklanmoqda...";
+  try{
    const {data,error}=await client.rpc("admin_diary_users");
+   if(seq!==generation||!allowed)return;
+   if(error)throw error;
    el("rows").replaceChildren();
-   if(error){el("counter").textContent="Xatolik: "+error.message;return;}
    el("counter").textContent=(data||[]).length+" ta foydalanuvchi";
    for(const u of data||[]){
     const tr=document.createElement("tr");
@@ -43,9 +48,27 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;bor
     }
     el("rows").append(tr);
    }
-  }
-  el("refresh").addEventListener("click",refresh);
-  await refresh();
- }catch(err){el("status").textContent=err.message||"Ruxsat berilmadi.";}
+  }catch(err){if(seq===generation&&allowed){el("rows").replaceChildren();el("counter").textContent="Xatolik: "+(err.message||"Yuklanmadi.");}}
+  finally{if(seq===generation){loading=false;el("refresh").disabled=false;}}
+ }
+ async function checkOwner(){
+  const seq=++generation;
+  try{
+   const {data,error}=await client.auth.getUser();
+   if(seq!==generation)return;
+   if(error||!data?.user)throw new Error("Avval kundalik sahifasidan akkauntingizga kiring.");
+   const admin=await client.rpc("am_i_diary_admin");
+   if(seq!==generation)return;
+   if(admin.error||admin.data!==true)throw new Error("Administrator huquqi yo‘q.");
+   ownerId=data.user.id;allowed=true;el("gate").classList.add("hidden");el("dashboard").classList.remove("hidden");
+   await refresh();
+  }catch(err){if(seq===generation){lock();el("status").textContent=err.message||"Ruxsat berilmadi.";}}
+ }
+ el("refresh").addEventListener("click",refresh);
+ client.auth.onAuthStateChange((event,session)=>{
+  if(!session)lock();
+  else if(event==="SIGNED_IN"&&session.user.id!==ownerId){lock();setTimeout(checkOwner,0);}
+ });
+ checkOwner();
 })();
 </script></body></html>
