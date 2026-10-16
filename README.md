@@ -32,3 +32,13 @@ Mehmon kodni tekshirish davomida ham “Kundalikni yopish / so‘rovni bekor qil
 ### Tekshirish
 
 Node.js 20+ bilan `node --test tests/privacy.cjs` buyrug‘ini bajaring. Testlar haqiqiy HTML/JS kodini soddalashtirilgan DOM va boshqariladigan Supabase javoblari bilan tekshiradi. Haqiqiy brauzer ko‘rinishi yoki jonli Supabase loginini tekshirmaydi.
+
+## Yozish va zaxiralash
+
+- Yangi yozuvga o‘tish, tahrirni bekor qilish yoki hisobdan chiqishdan oldin saqlanmagan matn uchun tasdiq so‘raladi. Sahifadan chiqishda brauzer ham ogohlantirishi mumkin.
+- `Ctrl+S` / `Cmd+S` joriy yozuvni saqlaydi. Matn ostida so‘zlar va belgilar soni ko‘rinadi.
+- Qidiruvni oy filtri bilan birga ishlatish va filtrlarni bir tugmada tozalash mumkin.
+- “JSON zaxira yuklab olish” barcha yuklangan yozuvlarni yuklab beradi; qidiruv filtri zaxirani cheklamaydi. Login, parol, sessiya va ishonch kodi zaxiraga kirmaydi. Faylda kundalik matni ochiq ko‘rinishda bo‘ladi. JSON import hali qo‘shilmagan.
+- Yozuvlar bazadan 500 tadan sahifalab olinadi; yuklash xatosidan keyin qayta urinish tugmasi bor.
+- Saqlash/o‘chirish vaqtida tahrir tugmalari, kod yaratish/bekor qilish vaqtida esa ikkala amal qulflanadi. Xatoda matn saqlanib qoladi va qayta urinish mumkin.
+- Admin va ishonch kodi sahifalari sessiya tugaganda shaxsiy ma’lumotlarni tozalaydi. Kechikkan javoblar ularni qayta ko‘rsata olmaydi.
