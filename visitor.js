@@ -6,6 +6,7 @@
     "sb_publishable_XVoP3QTblvFdhjs157vaWQ_yXTaYtE8"
   );
   let readSequence = 0;
+  let gate = null;
   function say(message, isError = false) {
     $("message").textContent = message;
     $("message").style.color = isError ? "#ff8a9b" : "#b5bdd1";
@@ -14,54 +15,118 @@
     $("notes").replaceChildren();
     $("readSection").classList.add("hidden");
   }
+  function clearAnswers() {
+    for (const input of $("questionFields").querySelectorAll("input")) input.value = "";
+  }
+  function resetAccess() {
+    gate = null;
+    clearRead(); clearAnswers();
+    $("questionFields").replaceChildren();
+    $("questionForm").classList.add("hidden");
+    $("accessForm").classList.remove("hidden");
+    $("closeBtn").classList.add("hidden");
+    $("openBtn").disabled = false;
+    $("verifyBtn").disabled = false;
+    $("code").value = "";
+  }
+  function resultMessage(data) {
+    if (data?.status === "blocked") {
+      const until = new Date(data.blocked_until).toLocaleTimeString("uz-UZ");
+      return `Urinishlar chegarasi tugadi. ${until} dan keyin qayta urinib ko‘ring.`;
+    }
+    if (data?.status === "invalid_answers") return `Javoblar noto‘g‘ri. Qolgan urinishlar: ${data.attempts_remaining}.`;
+    if (data?.status === "not_configured") return "Maxfiy savollar hali sozlanmagan. Kundalik egasiga murojaat qiling.";
+    return "Kod noto‘g‘ri, bekor qilingan yoki uning muddati tugagan.";
+  }
   $("closeBtn").addEventListener("click", () => {
     readSequence++;
-    $("closeBtn").classList.add("hidden");
-    clearRead();
-    $("openBtn").disabled = false;
-    $("code").value = "";
+    resetAccess();
     say("Kundalik yopildi.");
   });
   $("accessForm").addEventListener("submit", async event => {
     event.preventDefault();
+    if ($("openBtn").disabled) return;
     const seq = ++readSequence;
-    clearRead();
-    const button = $("openBtn");
-    button.disabled = true;
-    $("closeBtn").classList.remove("hidden");
-    say("Kod tekshirilmoqda...");
     const alias = $("alias").value.trim().toLowerCase();
     const code = $("code").value.trim().toLowerCase();
+    resetAccess();
+    $("openBtn").disabled = true;
+    $("closeBtn").classList.remove("hidden");
+    say("1-bosqich: kod tekshirilmoqda...");
     try {
-      const { data, error } = await db.rpc("read_private_diary_with_code", {
-        p_alias: alias, p_code: code
-      });
+      const { data, error } = await db.rpc("get_private_diary_questions", { p_alias:alias, p_code:code });
       if (seq !== readSequence) return;
       if (error) throw error;
-      $("code").value = "";
-      if (!Array.isArray(data) || !data.length) {
-        say("Yozuv topilmadi. Kod noto‘g‘ri, eskirgan yoki kundalik hali bo‘sh bo‘lishi mumkin.", true);
-        return;
+      if (data?.status !== "questions_required" || !Array.isArray(data.questions) || data.questions.length !== 3) {
+        resetAccess(); say(resultMessage(data), true); return;
       }
-      for (const item of data) {
+      gate = { alias, code };
+      for (const question of data.questions) {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.id = `answer${question.number}`;
+        input.type = "password"; input.autocomplete = "off";
+        input.maxLength = 200; input.required = true;
+        label.htmlFor = input.id; label.textContent = question.text;
+        $("questionFields").append(label,input);
+      }
+      $("accessForm").classList.add("hidden");
+      $("questionForm").classList.remove("hidden");
+      $("questionFields").querySelector("input").focus();
+      say("Kod tasdiqlandi. Endi uchta maxfiy savolga javob bering.");
+    } catch {
+      if (seq !== readSequence) return;
+      resetAccess(); say("Kodni tekshirib bo‘lmadi. Qayta urinib ko‘ring.", true);
+    } finally {
+      if (seq === readSequence) $("openBtn").disabled = false;
+    }
+  });
+  $("questionForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!gate || $("verifyBtn").disabled) return;
+    const seq = ++readSequence;
+    const credentials = gate;
+    const answers = [1,2,3].map(number => $("answer" + number).value);
+    $("verifyBtn").disabled = true;
+    clearRead();
+    say("2-bosqich: javoblar tekshirilmoqda...");
+    try {
+      const entries = [];
+      let offset = 0;
+      while (true) {
+        const { data, error } = await db.rpc("read_private_diary_verified", {
+          p_alias:credentials.alias, p_code:credentials.code, p_answers:answers, p_offset:offset
+        });
+        if (seq !== readSequence) return;
+        if (error) throw error;
+        if (data?.status !== "ok" || !Array.isArray(data.entries)) {
+          clearAnswers();
+          if (data?.status !== "invalid_answers") resetAccess();
+          say(resultMessage(data), true); return;
+        }
+        entries.push(...data.entries);
+        if (!data.has_more) break;
+        if (!Number.isInteger(data.next_offset) || data.next_offset <= offset) throw new Error("Invalid page");
+        offset = data.next_offset;
+      }
+      clearAnswers(); gate = null;
+      $("questionFields").replaceChildren();
+      $("questionForm").classList.add("hidden");
+      for (const item of entries) {
         const article = document.createElement("article");
-        const heading = document.createElement("h2");
-        heading.textContent = item.title;
-        const date = document.createElement("small");
-        date.textContent = item.entry_date;
-        const body = document.createElement("p");
-        body.textContent = item.content;
-        article.append(heading, date, body);
-        $("notes").append(article);
+        const heading = document.createElement("h2"); heading.textContent = item.title;
+        const date = document.createElement("small"); date.textContent = item.entry_date;
+        const body = document.createElement("p"); body.textContent = item.content;
+        article.append(heading,date,body); $("notes").append(article);
       }
       $("readSection").classList.remove("hidden");
-      say("Faqat o‘qish rejimi. " + data.length + " ta yozuv ochildi.");
-    } catch (error) {
+      say(entries.length ? `Ikki bosqich ham tasdiqlandi. ${entries.length} ta yozuv — faqat o‘qish rejimi.` : "Ikki bosqich ham tasdiqlandi. Kundalik hozircha bo‘sh.");
+    } catch {
       if (seq !== readSequence) return;
-      $("code").value = "";
-      say("Kundalikni ochib bo‘lmadi. " + (error.message || "Qayta urinib ko‘ring."), true);
+      clearAnswers(); say("Javoblarni tekshirib bo‘lmadi. Qayta urinib ko‘ring.", true);
     } finally {
-      if (seq === readSequence) button.disabled = false;
+      answers.fill("");
+      if (seq === readSequence) $("verifyBtn").disabled = false;
     }
   });
 })();

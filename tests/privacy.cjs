@@ -36,6 +36,8 @@ function element(classes = '') {
     addEventListener(type,handler){this.handlers[type]=handler;},
     async fire(type){return this.handlers[type]?.({preventDefault(){},target:this});},
     append(...items){this.children.push(...items);},replaceChildren(){this.children=[];},
+    querySelectorAll(tag){return this.children.flatMap(child=>[...(child.tagName===tag?[child]:[]),...child.querySelectorAll(tag)]);},
+    querySelector(tag){return this.querySelectorAll(tag)[0];},
     focus(){},scrollIntoView(){},reset(){},click(){},remove(){}
   };
 }
@@ -49,7 +51,7 @@ function page(file, mode = 'normal', setup = () => {}) {
   const body=element();
   const handlers={};
   const context=vm.createContext({console,setTimeout,confirm:()=>true,addEventListener:(type,fn)=>{handlers[type]=fn;},location:{pathname:file},localStorage:{getItem(){return null;},setItem(){}},
-    document:{getElementById:id=>{assert.ok(elements.has(id),'missing element '+id);return elements.get(id);},querySelectorAll:()=>[],addEventListener:(type,fn)=>{handlers[type]=fn;},body,createElement:()=>element()},
+    document:{getElementById:id=>{const found=elements.get(id)||[...elements.values()].flatMap(el=>el.children).find(el=>el.id===id);assert.ok(found,'missing element '+id);return found;},querySelectorAll:()=>[],addEventListener:(type,fn)=>{handlers[type]=fn;},body,createElement:tag=>{const node=element();node.tagName=tag;return node;}},
     window:null});
   context.window=context;
   vm.runInContext(mock,context);
@@ -75,15 +77,20 @@ for(const mode of ['user','permission'])test('delayed '+mode+' verification cann
   p.context.resolvePending(mode==='user'?{data:{user:{id:'owner'}}}:{data:true});await settle();
   assert.equal(p.hidden('appView'),true);assert.equal(p.hidden('adminLink'),true);
 });
-test('closing a guest read discards its response while a fresh read succeeds',async()=>{
+const challenge = {status:'questions_required',questions:[1,2,3].map(number=>({number,text:'Question '+number}))};
+test('closing a guest read discards its response while a fresh two-stage read succeeds',async()=>{
   const p=page('visitor.html');p.get('alias').value='diary';p.get('code').value='a'.repeat(32);
   const first=p.get('accessForm').fire('submit');assert.equal(p.hidden('closeBtn'),false);
   await p.get('closeBtn').fire('click');p.get('code').value='b'.repeat(32);
   const second=p.get('accessForm').fire('submit');assert.equal(p.context.pending.length,2);
-  p.context.resolvePending({data:[{title:'Stale note',content:'secret',entry_date:'2026-10-16'}]});await first;
-  assert.equal(p.hidden('readSection'),true);assert.equal(p.get('notes').children.length,0);
-  assert.equal(p.get('openBtn').disabled,true);assert.equal(p.get('code').value,'b'.repeat(32));
-  p.context.resolvePending({data:[{title:'Current note',content:'allowed',entry_date:'2026-10-16'}]});await second;
+  p.context.resolvePending({data:challenge});await first;
+  assert.equal(p.hidden('questionForm'),true);assert.equal(p.get('notes').children.length,0);
+  assert.equal(p.get('openBtn').disabled,true);
+  p.context.resolvePending({data:challenge});await second;
+  assert.equal(p.hidden('questionForm'),false);assert.equal(p.hidden('readSection'),true);
+  for(const input of p.get('questionFields').children.filter(n=>n.tagName==='input'))input.value='fixture';
+  const verify=p.get('questionForm').fire('submit');
+  p.context.resolvePending({data:{status:'ok',entries:[{title:'Current note',content:'allowed',entry_date:'2026-10-16'}],has_more:false}});await verify;
   assert.equal(p.hidden('readSection'),false);assert.equal(p.get('notes').children[0].children[0].textContent,'Current note');
   await p.get('closeBtn').fire('click');assert.equal(p.get('notes').children.length,0);assert.equal(p.get('code').value,'');
 });
@@ -166,4 +173,31 @@ test('failed deletion leaves the note intact and restores controls',async()=>{
  await p.get('entriesList').handlers.click({target:{closest:selector=>selector==='[data-delete]'?del:null}});
  assert.match(p.get('entriesList').innerHTML,/Private title/);assert.match(p.get('saveMessage').textContent,/Connection failed/);
  assert.equal(del.disabled,false);assert.equal(p.get('saveBtn').disabled,false);
+});
+async function openGuestChallenge(p) {
+ p.get('alias').value='diary';p.get('code').value='a'.repeat(32);
+ const request=p.get('accessForm').fire('submit');p.context.resolvePending({data:challenge});await request;
+ for(const input of p.get('questionFields').children.filter(n=>n.tagName==='input'))input.value='fixture';
+}
+test('wrong answers reveal no notes and retain the challenge for another try',async()=>{
+ const p=page('visitor.html');await openGuestChallenge(p);const verify=p.get('questionForm').fire('submit');
+ p.context.resolvePending({data:{status:'invalid_answers',attempts_remaining:4}});await verify;
+ assert.equal(p.hidden('readSection'),true);assert.equal(p.hidden('questionForm'),false);assert.match(p.get('message').textContent,/4/);
+ assert.ok(p.get('questionFields').children.filter(n=>n.tagName==='input').every(n=>n.value===''));
+});
+test('closing during second-stage verification discards late private notes',async()=>{
+ const p=page('visitor.html');await openGuestChallenge(p);const verify=p.get('questionForm').fire('submit');
+ await p.get('closeBtn').fire('click');
+ p.context.resolvePending({data:{status:'ok',entries:[{title:'Late secret',content:'private'}],has_more:false}});await verify;
+ assert.equal(p.hidden('readSection'),true);assert.equal(p.get('notes').children.length,0);assert.equal(p.get('questionFields').children.length,0);
+});
+test('lockout clears credentials and requires the code step again',async()=>{
+ const p=page('visitor.html');await openGuestChallenge(p);const verify=p.get('questionForm').fire('submit');
+ p.context.resolvePending({data:{status:'blocked',blocked_until:new Date(Date.now()+900000).toISOString()}});await verify;
+ assert.equal(p.hidden('questionForm'),true);assert.equal(p.hidden('accessForm'),false);assert.equal(p.get('code').value,'');assert.equal(p.get('questionFields').children.length,0);
+});
+test('a verified empty diary is shown as empty rather than an invalid code',async()=>{
+ const p=page('visitor.html');await openGuestChallenge(p);const verify=p.get('questionForm').fire('submit');
+ p.context.resolvePending({data:{status:'ok',entries:[],has_more:false}});await verify;
+ assert.equal(p.hidden('readSection'),false);assert.match(p.get('message').textContent,/hozircha bo‘sh/);
 });
