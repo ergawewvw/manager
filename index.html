@@ -98,7 +98,7 @@
 </head>
 <body>
 
-<!-- PRIVATE OWNER LOGIN / GUEST CODE -->
+<!-- MULTI-USER AUTH / GUEST CODE -->
 <section id="authView" class="auth-wrap">
   <div class="auth-card">
     <div class="brand">
@@ -106,19 +106,19 @@
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
     <h1 id="authTitle">Akkauntga kirish</h1>
-    <p class="hint" id="authHint">Bu shaxsiy kundalik. Faqat egasi email va parol bilan kiradi.</p>
+    <p class="hint" id="authHint">O‘z shaxsiy kundaligingizga kiring yoki yangi akkaunt oching.</p>
     <form id="authForm">
       <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
       <label for="password">Parol</label>
       <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Parolingizni kiriting" required>
       <div class="actions">
-        <button class="btn primary" id="authSubmit" type="submit">Kirish</button>
+        <button class="btn primary" id="authSubmit" type="submit">Kirish</button><button class="btn" id="authSwitch" type="button">Yangi akkaunt yaratish</button>
       </div>
     </form>
     <a class="btn" href="./visitor.html" style="display:block;text-align:center;margin-top:14px;text-decoration:none">Mehmon sifatida ishonch kodi bilan o‘qish</a>
     <div id="message" role="status" aria-live="polite"></div>
-    <p class="notice">Yangi akkaunt yaratish yopiq. Mehmonlar faqat egasi bergan maxfiy kod bilan kundalikni o‘qiy oladi.</p>
+    <p class="notice">Har kim o‘z kundaligini yuritishi va maxfiy kod bilan faqat o‘qishga ulashishi mumkin.</p>
   </div>
 </section>
 
@@ -208,6 +208,7 @@
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let currentUser = null;
+  let signupMode = false;
   let entries = [];
   let busy = false;
   let fetchSequence = 0;
@@ -290,6 +291,16 @@
     });
   }
 
+  $("authSwitch").addEventListener("click", () => {
+    signupMode = !signupMode;
+    $("authTitle").textContent = signupMode ? "Yangi akkaunt" : "Akkauntga kirish";
+    $("authSubmit").textContent = signupMode ? "Ro‘yxatdan o‘tish" : "Kirish";
+    $("authSwitch").textContent = signupMode ? "Akkauntim bor — kirish" : "Yangi akkaunt yaratish";
+    $("password").autocomplete = signupMode ? "new-password" : "current-password";
+    $("password").minLength = signupMode ? 8 : 6;
+    showMessage("");
+  });
+
   $("authForm").addEventListener("submit", async event => {
     event.preventDefault();
     if (busy) return;
@@ -297,13 +308,25 @@
     $("authSubmit").disabled = true;
     showMessage("Tekshirilmoqda...");
     try {
-      const { error } = await client.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-      if (error) throw error;
-      $("password").value = "";
-      await checkSession();
+      const credentials = { email: $("email").value.trim(), password: $("password").value };
+      if (signupMode) {
+        const { data, error } = await client.auth.signUp({
+          ...credentials,
+          options: { emailRedirectTo: new URL("./index.html", window.location.href).href }
+        });
+        if (error) throw error;
+        $("password").value = "";
+        if (!data?.session) {
+          showMessage("Ro‘yxatdan o‘tish so‘rovi qabul qilindi. Emailingizni tasdiqlang, so‘ng kiring.");
+        } else {
+          await checkSession();
+        }
+      } else {
+        const { error } = await client.auth.signInWithPassword(credentials);
+        if (error) throw error;
+        $("password").value = "";
+        await checkSession();
+      }
     } catch (error) {
       showMessage(error.message || "Kirishda xatolik yuz berdi.", true);
     } finally {
@@ -318,15 +341,6 @@
     if (seq !== sessionSequence) return;
     if (error || !data?.user) {
       clearPrivateState();
-      return;
-    }
-
-    const permission = await client.rpc("am_i_diary_admin");
-    if (seq !== sessionSequence) return;
-    if (permission.error || permission.data !== true) {
-      clearPrivateState();
-      await client.auth.signOut();
-      showMessage("Bu shaxsiy kundalik. Mehmon bo‘lsangiz, ishonch kodidan foydalaning.", true);
       return;
     }
 
