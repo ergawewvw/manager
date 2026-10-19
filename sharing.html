@@ -25,6 +25,19 @@ button:disabled{opacity:.55}.danger{background:#8a4054}
 <p>Kundaligingiz faqat sizga tegishli. O‘qishga ruxsat bermoqchi bo‘lgan odamga shu yerda yaratilgan nom va kodni bering. Mehmon login qilmaydi: koddan keyin siz belgilagan uchta maxfiy savolga ham javob beradi. Yozuvni o‘zgartira olmaydi.</p>
 <p id="gate" role="status">Egasi tekshirilmoqda...</p>
 <section id="ownerPanel" class="panel hidden">
+<section aria-labelledby="questionsTitle">
+<h2 id="questionsTitle">Mening maxfiy savollarim</h2>
+<p>Har bir kundalik egasi o‘zining uchta savoli va javobini belgilaydi. Javoblarni mehmonlarga faqat o‘zingiz ayting. Savollarni almashtirish barcha eski kodlarni bekor qiladi.</p>
+<form id="questionsForm">
+<label for="question1">1-savol</label><input id="question1" minlength="5" maxlength="160" required>
+<label for="answer1">1-javob</label><input id="answer1" type="password" minlength="2" maxlength="200" autocomplete="off" required>
+<label for="question2">2-savol</label><input id="question2" minlength="5" maxlength="160" required>
+<label for="answer2">2-javob</label><input id="answer2" type="password" minlength="2" maxlength="200" autocomplete="off" required>
+<label for="question3">3-savol</label><input id="question3" minlength="5" maxlength="160" required>
+<label for="answer3">3-javob</label><input id="answer3" type="password" minlength="2" maxlength="200" autocomplete="off" required>
+<button id="questionsBtn" type="submit">Maxfiy savollarni saqlash</button>
+</form><p id="questionsStatus" role="status"></p>
+</section>
 <form id="shareForm">
 <label for="alias">Kundalik nomi (4–32 belgi)</label>
 <input id="alias" pattern="[a-z0-9_-]{4,32}" minlength="4" maxlength="32" autocomplete="off" placeholder="mening_kundaligim" required>
