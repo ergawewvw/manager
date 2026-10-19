@@ -26,6 +26,8 @@
     clearCode();
     $("alias").value = "";
     $("shareState").textContent = "";
+    $("questionsStatus").textContent = "";
+    for (let n=1;n<=3;n++) { $("question"+n).value = ""; $("answer"+n).value = ""; }
     $("status").textContent = "";
     $("ownerPanel").classList.add("hidden");
     message("gate", "Avval egasi sifatida login qiling.", true);
@@ -35,6 +37,7 @@
     busy = value;
     $("createBtn").disabled = value;
     $("revokeBtn").disabled = value;
+    $("questionsBtn").disabled = value;
   }
   async function refreshState(seq) {
     const { data, error } = await db.rpc("my_diary_share");
@@ -46,6 +49,34 @@
       ? "Faol nom: " + item.share_alias + " • muddati: " + new Date(item.expires_at).toLocaleString("uz-UZ")
       : "Ishonch kodi faol emas.");
   }
+  async function loadQuestions(seq) {
+    const {data,error} = await db.rpc("my_diary_questions");
+    if (seq !== generation || !ownerId) return;
+    if (error) { message("questionsStatus",error.message,true); return; }
+    for (const question of data || []) {
+      if (question.number >= 1 && question.number <= 3) $("question"+question.number).value=question.text;
+    }
+    message("questionsStatus",data?.length===3 ? "Uchta savol sozlangan. O‘zgartirishda yangi javoblar ham kiriting." : "Kod yaratishdan oldin uchta savol va javobni kiriting.");
+  }
+  $("questionsForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!ownerId || busy || !confirm("Savollarni almashtirish eski ishonch kodini bekor qiladi. Davom etasizmi?")) return;
+    const seq=generation;
+    const questions=[1,2,3].map(n=>$("question"+n).value.trim());
+    const answers=[1,2,3].map(n=>$("answer"+n).value.trim());
+    setBusy(true);
+    try {
+      const {error}=await db.rpc("set_my_diary_questions",{p_questions:questions,p_answers:answers});
+      if(seq!==generation || !ownerId)return;
+      if(error)throw error;
+      for(let n=1;n<=3;n++)$("answer"+n).value="";
+      clearCode();
+      message("questionsStatus","Savollar saqlandi. Eski ishonch kodi bekor qilindi.");
+      await refreshState(seq);
+    } catch(error) {
+      if(seq===generation && ownerId)message("questionsStatus",error.message||"Savollar saqlanmadi.",true);
+    } finally { answers.fill("");setBusy(false,seq); }
+  });
   $("shareForm").addEventListener("submit", async event => {
     event.preventDefault();
     if (!ownerId || busy || !confirm("Yangi kod oldingi kodni bekor qiladi. Davom etasizmi?")) return;
@@ -101,13 +132,10 @@
       const { data, error } = await db.auth.getUser();
       if (seq !== generation) return;
       if (error || !data?.user) throw new Error("Avval egasi sifatida login qiling.");
-      const admin = await db.rpc("am_i_diary_admin");
-      if (seq !== generation) return;
-      if (admin.error || admin.data !== true) throw new Error("Bu sahifaga faqat kundalik egasi kira oladi.");
       ownerId = data.user.id;
       message("gate", "Egasining huquqi tasdiqlandi.");
       $("ownerPanel").classList.remove("hidden");
-      await refreshState(seq);
+      await Promise.all([refreshState(seq),loadQuestions(seq)]);
     } catch (error) {
       if (seq !== generation) return;
       lock();
