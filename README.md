@@ -1,3 +1,24 @@
+# Daily Diary — ko‘p foydalanuvchili shaxsiy kundalik
+
+Har bir foydalanuvchi o‘z emaili va paroli bilan ro‘yxatdan o‘tadi va o‘z yozuvlarini yaratadi, ko‘radi, tahrirlaydi, o‘chiradi. `public.diary_entries` jadvalida RLS `auth.uid() = user_id` sharti bilan ajratilgan. Hech bir oddiy foydalanuvchi boshqa akkaunt yozuvlariga to‘g‘ridan-to‘g‘ri kira olmaydi.
+
+## Ishga tushirish
+
+1. Supabase Dashboard → Authentication → Providers → Email bo‘limida **Allow new users to sign up** yoqilganligini tekshiring; avval loyihada bu parametrni o‘chirish tavsiya etilgan. Bu sozlama yoqilmaguncha frontenddagi ro‘yxatdan o‘tish tugmasi ishlamaydi.
+2. Email confirmation yoqilgan bo‘lsa, yangi foydalanuvchi emailini tasdiqlashi kerak.
+3. GitHub Pages deployed versiyasida ikki alohida test akkaunt yarating. A akkauntda yozuv yaratib, B akkauntda ko‘rinmasligini va o‘zgartirib bo‘lmasligini tekshiring.
+4. Supabase Auth'da leaked-password protection'ni yoqing (Security Advisor ogohlantirgan).
+5. Yangi foydalanuvchilarga ishonch kodi bilan ulashish hali yoqilmagan. Ilgari mavjud adminning mehmon-kod tizimi saqlangan; ko‘p foydalanuvchili ulashish uchun alohida xavfsiz dizayn kerak.
+
+## Cheklovlar
+
+- JSON eksport mavjud, JSON import hozircha yo‘q.
+- Live brauzer va ikki real akkaunt bilan end-to-end test hali bajarilmadi.
+- Bazadagi `diary_private` sxemasi uchun RLS auditini davom ettirish kerak; hozir `anon`/`authenticated` rollariga jadvallar ustida bevosita grantlar aniqlanmadi. RLS o‘chirilgan uchta jadval uchun alohida xavfsizlik tekshiruvi zarur.
+- Mehmonlar uchun yagona global savollar va umumiy ishonch kodi eski egasi uchun qoldirildi.
+
+## Legacy sharing va kod tafsilotlari
+
 # Daily Diary — xususiy kundalik
 
 Shaxsiy kundalik uchun yangi rejim: **faqat egasi kiradi, mehmonlar esa ishonch kodi va uchta maxfiy savol orqali faqat o‘qiydi**.
