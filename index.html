@@ -4,7 +4,7 @@
 <head>
 <link rel="icon" href="./favicon.ico?v=20261016">
 <link rel="icon" type="image/png" sizes="64x64" href="./assets/favicon.png?v=20261016">
-<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="robots" content="index,follow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1020">
@@ -106,19 +106,19 @@
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
     </div>
     <h1 id="authTitle">Akkauntga kirish</h1>
-    <p class="hint" id="authHint">Bu shaxsiy kundalik. Faqat egasi email va parol bilan kiradi.</p>
+    <p class="hint" id="authHint">O‘z kundaligingni yurit. Yozuvlaring faqat senga ko‘rinadi.</p>
     <form id="authForm">
       <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
       <label for="password">Parol</label>
       <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Parolingizni kiriting" required>
       <div class="actions">
-        <button class="btn primary" id="authSubmit" type="submit">Kirish</button>
+        <button class="btn primary" id="authSubmit" type="submit">Kirish</button><button class="btn" id="signupBtn" type="button">Ro‘yxatdan o‘tish</button>
       </div>
     </form>
     <a class="btn" href="./visitor.html" style="display:block;text-align:center;margin-top:14px;text-decoration:none">Mehmon sifatida ishonch kodi bilan o‘qish</a>
     <div id="message" role="status" aria-live="polite"></div>
-    <p class="notice">Yangi akkaunt yaratish yopiq. Mehmonlar faqat egasi bergan maxfiy kod bilan kundalikni o‘qiy oladi.</p>
+    <p class="notice">Yangi akkaunt yaratish uchun «Ro‘yxatdan o‘tish» ni bosing. Email tasdiqlash talab qilinishi mumkin.</p>
   </div>
 </section>
 
@@ -133,7 +133,7 @@
     <button class="nav active" data-view="dashboard">◫ &nbsp; Bosh sahifa</button>
     <button class="nav" data-view="entries">▤ &nbsp; Yozuvlarim</button>
     <button class="nav" data-view="write">✎ &nbsp; Bugun yozish</button>
-    <a class="nav" href="./sharing.html">Ishonch kodini boshqarish</a>
+    <a class="nav hidden" id="sharingLink" href="./sharing.html">Ishonch kodini boshqarish</a>
     <a id="adminLink" href="./admin.html" class="nav hidden">Admin panel</a>
     <button class="nav" id="themeBtn">☼ &nbsp; Mavzu</button>
     <button class="nav" id="logoutBtn">↪ &nbsp; Chiqish</button>
@@ -145,7 +145,7 @@
       <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
       <div><h2>Daily Diary</h2><p>Your personal space</p></div>
       <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
-      <a class="btn" href="./sharing.html">Ishonch kodi</a>
+      <a class="btn hidden" id="mobileSharingLink" href="./sharing.html">Ishonch kodi</a>
       <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>
       <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
     </div>
@@ -245,6 +245,8 @@
     $("authView").classList.remove("hidden");
     $("appView").classList.add("hidden");
     $("adminLink").classList.add("hidden");
+    $("sharingLink").classList.add("hidden");
+    $("mobileSharingLink").classList.add("hidden");
     $("mobileAdminLink").classList.add("hidden");
     render();
   }
@@ -258,6 +260,8 @@
       if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
       allowed = !error && data === true;
     }
+    $("sharingLink").classList.toggle("hidden", !allowed);
+    $("mobileSharingLink").classList.toggle("hidden", !allowed);
     $("adminLink").classList.toggle("hidden", !allowed);
     $("mobileAdminLink").classList.toggle("hidden", !allowed);
   }
@@ -312,21 +316,33 @@
     }
   });
 
+  $("signupBtn").addEventListener("click", async () => {
+    if (busy) return;
+    const email = $("email").value.trim();
+    const password = $("password").value;
+    if (!email || !password || password.length < 8) {
+      showMessage("Email va kamida 8 belgili parol kiriting.", true); return;
+    }
+    busy = true;
+    $("signupBtn").disabled = true;
+    $("authSubmit").disabled = true;
+    showMessage("Akkaunt yaratilmoqda...");
+    try {
+      const {data,error} = await client.auth.signUp({email,password});
+      if (error) throw error;
+      $("password").value = "";
+      if (data?.session) await checkSession();
+      else showMessage("Ro‘yxatdan o‘tish so‘rovi qabul qilindi. Emailingizni tasdiqlang, so‘ng kiring.");
+    } catch (error) { showMessage(error.message || "Ro‘yxatdan o‘tishda xatolik.", true); }
+    finally { busy = false; $("signupBtn").disabled = false; $("authSubmit").disabled = false; }
+  });
+
   async function checkSession() {
     const seq = ++sessionSequence;
     const { data, error } = await client.auth.getUser();
     if (seq !== sessionSequence) return;
     if (error || !data?.user) {
       clearPrivateState();
-      return;
-    }
-
-    const permission = await client.rpc("am_i_diary_admin");
-    if (seq !== sessionSequence) return;
-    if (permission.error || permission.data !== true) {
-      clearPrivateState();
-      await client.auth.signOut();
-      showMessage("Bu shaxsiy kundalik. Mehmon bo‘lsangiz, ishonch kodidan foydalaning.", true);
       return;
     }
 
