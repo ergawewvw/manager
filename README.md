@@ -1,5 +1,7 @@
 # Daily Diary
 
+Android sinov ilovasi: [android/README.md](android/README.md). APK GitHub Actions’dagi **Android APK** workflow orqali yig‘iladi.
+
 Shaxsiy kundalik: har bir akkaunt o‘z yozuvlarini yaratadi, o‘qiydi, tahrirlaydi va o‘chiradi. Statik sayt GitHub Pages’da, autentifikatsiya va ma’lumotlar Supabase’da ishlaydi.
 
 ## Kundalik va tezlik

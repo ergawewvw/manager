@@ -188,6 +188,16 @@ test('JSON backup exports independently of the current search filter',async()=>{
  assert.equal(backup.version,1);assert.equal(backup.entries.length,1);assert.equal(backup.entries[0].title,'Private title');
  assert.equal(backup.entries[0].user_id,undefined);assert.equal(backup.entries[0].id,undefined);
 });
+test('Android backup uses the native save picker without exporting owner identifiers',async()=>{
+ const p=page('index.html');await settle();let request;
+ p.context.DailyDiaryExport={postMessage:message=>{request=JSON.parse(message);}};
+ await p.get('exportBtn').fire('click');
+ assert.match(request.filename,/^daily-diary-[0-9-]+\.json$/);
+ const backup=JSON.parse(request.content);
+ assert.equal(backup.entries[0].title,'Private title');
+ assert.equal(backup.entries[0].user_id,undefined);assert.equal(backup.entries[0].id,undefined);
+ assert.match(p.get('backupMessage').textContent,/Android/);
+});
 test('failed deletion leaves the note intact and restores controls',async()=>{
  const p=page('index.html');await settle();const del={dataset:{delete:'1'},disabled:false};
  p.context.queryHandler=()=>{const query={delete:()=>query,eq:()=>query,select:async()=>({error:{message:'Connection failed'}})};return query;};

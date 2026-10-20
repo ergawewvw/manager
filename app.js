@@ -313,6 +313,11 @@
       }
       if (!validBackupJob(job)) return;
       const backup = {version:1,exported_at:new Date().toISOString(),entries:notes.map(({title,content,entry_date,created_at,updated_at}) => ({title,content,entry_date,created_at,updated_at}))};
+      if (window.DailyDiaryExport?.postMessage) {
+        window.DailyDiaryExport.postMessage(JSON.stringify({filename:`daily-diary-${localDate()}.json`,content:JSON.stringify(backup,null,2)}));
+        $("backupMessage").textContent = "Android oynasida zaxira saqlanadigan joyni tanlang.";
+        return;
+      }
       const url = URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:"application/json;charset=utf-8"}));
       const link = document.createElement("a"); link.href = url; link.download = `daily-diary-${localDate()}.json`;
       document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
