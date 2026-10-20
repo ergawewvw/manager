@@ -9,7 +9,7 @@
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://pmdgnhkbmarvtvfprdsy.supabase.co wss://pmdgnhkbmarvtvfprdsy.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1020">
+  <meta name="theme-color" content="#f7f8f2">
   <title>Daily Diary</title>
   <script src="./assets/vendor/supabase-2.118.0.js" defer></script>
   <style>
@@ -97,19 +97,25 @@
       .card { padding:16px }
     }
   </style>
+<link rel="stylesheet" href="./design.css?v=20261020b">
 </head>
 <body>
 <noscript><p>Daily Diary ishlashi uchun brauzerda JavaScript yoqilgan bo‘lishi kerak.</p></noscript>
 
 <!-- PRIVATE OWNER LOGIN / GUEST CODE -->
 <section id="authView" class="auth-wrap">
-  <div class="auth-card">
+  <div class="welcome-story" aria-label="Daily Diary haqida">
+<a class="welcome-brand" href="./index.html"><img src="./assets/logo.png" alt="" width="42" height="42">Daily Diary<span>KUNDALIK HAYOT UCHUN</span></a>
+<div class="story-copy"><span class="eyebrow">KUNINGIZDAN BIR SAHIFA</span><h2>Kichik lahzalar.<br>Katta <em>xotiralar.</em></h2><p>Fikrlaringizni jamlang, kuningizni yozing va o‘zingizga vaqt ajrating. Hammasi bir joyda.</p></div>
+<div class="journal-preview" aria-hidden="true"><div class="preview-top"><span>MENING KUNDALIGIM</span><span>✦</span></div><h3>Bugun uchun minnatdorman.</h3><p>Ba’zan eng oddiy kunlar eng chiroyli xotiralarga aylanadi. Bugun yangi sahifadan boshlayman.</p><div class="preview-bottom"><span>Bir oz to‘xtang. Bir oz yozing.</span><span>↗</span></div></div>
+<div class="story-footer"><span>01 &nbsp; Yozing</span><span>02 &nbsp; Saqlang</span><span>03 &nbsp; Eslang</span></div></div>
+<div class="auth-card">
     <div class="brand">
       <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
-      <div><h2>Daily Diary</h2><p>Your personal space</p></div>
+      <div><h2>Daily Diary</h2><p>Shaxsiy kundaligingiz</p></div>
     </div>
     <h1 id="authTitle">Akkauntga kirish</h1>
-    <p class="hint" id="authHint">O‘z kundaligingni yurit. Yozuvlaring faqat senga ko‘rinadi.</p>
+    <p class="hint" id="authHint">Yozish uchun o‘zingizga qulay joy. Davom etish uchun akkauntingizga kiring.</p>
     <form id="authForm">
       <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
@@ -137,9 +143,9 @@
   <aside>
     <div class="brand">
       <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
-      <div><h2>Daily Diary</h2><p>Your personal space</p></div>
+      <div><h2>Daily Diary</h2><p>Shaxsiy kundaligingiz</p></div>
     </div>
-    <div class="nav-label">MENU</div>
+    <div class="nav-label">KUNDALIGIM</div>
     <button class="nav active" data-view="dashboard">◫ &nbsp; Bosh sahifa</button>
     <button class="nav" data-view="entries">▤ &nbsp; Yozuvlarim</button>
     <button class="nav" data-view="write">✎ &nbsp; Bugun yozish</button>
@@ -153,7 +159,7 @@
   <main>
     <div class="brand mobile-brand">
       <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
-      <div><h2>Daily Diary</h2><p>Your personal space</p></div>
+      <div><h2>Daily Diary</h2><p>Shaxsiy kundaligingiz</p></div>
       <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
       <a class="btn hidden" id="mobileSharingLink" href="./sharing.html">Ishonch kodi</a>
       <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>
@@ -162,7 +168,7 @@
 
     <header class="top">
       <div>
-        <h1 id="pageTitle">Xush kelibsan 👋</h1>
+        <h1 id="pageTitle">Bugun qanday kun?</h1>
         <p class="muted" id="todayLabel"></p>
       </div>
       <button class="btn primary" id="newBtn">＋ Yangi yozuv</button>
@@ -178,7 +184,7 @@
     <div class="workspace">
       <section class="card" id="editorCard">
         <h2 class="section" id="editorTitle">Yangi yozuv</h2>
-        <p class="hint">Bugungi fikrlaringni yozib qo‘y.</p>
+        <p class="hint">Shoshilmang. Bu sahifa sizning fikrlaringiz uchun.</p>
         <form id="entryForm">
           <input id="editId" type="hidden">
           <label for="entryTitle">Sarlavha</label>
@@ -201,7 +207,7 @@
         <p class="hint">Saqlangan kundaliklaring</p>
         <label for="searchInput">Sarlavha yoki matndan qidirish</label><input id="searchInput" maxlength="200" type="search" placeholder="🔍 Qidirish..." aria-label="Yozuvlardan qidirish">
         <div class="filters"><label for="monthFilter">Oy bo‘yicha<input id="monthFilter" type="month"></label><button id="clearFilters" class="btn" type="button">Filtrni tozalash</button></div>
-        <div class="actions"><button id="exportBtn" class="btn" type="button">JSON zaxira yuklab olish</button><button id="importBtn" class="btn" type="button">JSON zaxirani yuklash</button><input id="importFile" class="hidden" type="file" accept=".json,application/json" aria-label="Kundalik zaxira fayli"><button id="retryBtn" class="btn hidden" type="button">Qayta yuklash</button></div>
+        <div class="actions"><button id="exportBtn" class="btn" type="button">Zaxirani saqlash</button><button id="importBtn" class="btn" type="button">Zaxiradan tiklash</button><input id="importFile" class="hidden" type="file" accept=".json,application/json" aria-label="Kundalik zaxira fayli"><button id="retryBtn" class="btn hidden" type="button">Qayta yuklash</button></div>
         <p id="backupMessage" class="notice" role="status" aria-live="polite"></p><p id="resultsCount" class="notice" role="status"></p>
         <div id="entriesList"><div class="empty">Yuklanmoqda...</div></div>
         <nav class="actions" aria-label="Yozuvlar sahifalari"><button id="prevPageBtn" class="btn" type="button" disabled>← Oldingi</button><span id="pageLabel" class="notice">1-sahifa</span><button id="nextPageBtn" class="btn" type="button" disabled>Keyingi →</button></nav>
