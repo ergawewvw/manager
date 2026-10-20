@@ -381,6 +381,6 @@
       clearPrivateState(); setTimeout(() => { if (!recoveryMode && currentUser?.id !== session.user.id) checkSession(); },0);
     }
   });
-  try { setTheme(localStorage.getItem("daily_diary_theme") !== "dark"); } catch { setTheme(false); }
+  try { setTheme(localStorage.getItem("daily_diary_theme") === "light"); } catch { setTheme(false); }
   resetForm(); checkSession();
 })();
