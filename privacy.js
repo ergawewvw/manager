@@ -40,10 +40,9 @@
   const watermark = document.createElement("div");
   watermark.id = "privacyWatermark";
   watermark.setAttribute("aria-hidden", "true");
-  const date = new Date().toISOString().slice(0, 10);
   for (let i = 0; i < 18; i++) {
     const label = document.createElement("span");
-    label.textContent = `Daily Diary · MAXFIY · ${date}`;
+    label.textContent = "Daily Diary";
     watermark.append(label);
   }
   document.body.append(watermark, dock, curtain);
