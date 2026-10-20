@@ -11,6 +11,9 @@ insert into diary_private.share_settings(owner_id,alias,code_hash,expires_at,rev
 delete from diary_private.guest_answer_attempts where owner_id in(select user_id from diary_private.admins);
 insert into public.diary_entries(user_id,title,content,entry_date)
   select user_id,'__guest_verification_fixture__','__private_fixture__',current_date from diary_private.admins limit 1;
+insert into public.diary_entries(user_id,title,content,entry_date)
+ select user_id,'__guest_page_fixture__ '||g,'Bounded guest pagination fixture',date '1900-01-01'
+ from diary_private.admins cross join generate_series(1,50) g;
 set local role anon;
 do $$
 declare r jsonb; i integer;
@@ -28,6 +31,9 @@ begin
   r := public.read_private_diary_verified('guest_verification_fixture',repeat('a',32),array['fixture-answer-1','fixture-answer-2','fixture-answer-3']);
   assert r->>'status'='ok' and jsonb_array_length(r->'entries')>0, 'Correct answers failed';
   assert exists(select 1 from jsonb_array_elements(r->'entries') e where e->>'title'='__guest_verification_fixture__'), 'Verified note missing';
+  assert jsonb_array_length(r->'entries')=40 and (r->>'has_more')::boolean and (r->>'next_offset')::int=40,'Guest page was not bounded';
+  r:=public.read_private_diary_verified('guest_verification_fixture',repeat('a',32),array['fixture-answer-1','fixture-answer-2','fixture-answer-3'],40);
+  assert r->>'status'='ok' and jsonb_array_length(r->'entries') between 1 and 40,'Next guest page failed';
   for i in 1..5 loop
     r := public.read_private_diary_verified('guest_verification_fixture',repeat('a',32),array['bad','bad','bad']);
   end loop;

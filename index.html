@@ -6,10 +6,12 @@
 <link rel="icon" type="image/png" sizes="64x64" href="./assets/favicon.png?v=20261016">
 <meta name="robots" content="index,follow">
   <meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://pmdgnhkbmarvtvfprdsy.supabase.co wss://pmdgnhkbmarvtvfprdsy.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1020">
   <title>Daily Diary</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./assets/vendor/supabase-2.118.0.js" defer></script>
   <style>
     :root {
       --bg:#0b1020; --panel:#121a2c; --soft:#1b263c;
@@ -97,6 +99,7 @@
   </style>
 </head>
 <body>
+<noscript><p>Daily Diary ishlashi uchun brauzerda JavaScript yoqilgan bo‘lishi kerak.</p></noscript>
 
 <!-- PRIVATE OWNER LOGIN / GUEST CODE -->
 <section id="authView" class="auth-wrap">
@@ -111,17 +114,24 @@
       <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
       <label for="password">Parol</label>
-      <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Parolingizni kiriting" required>
+      <input id="password" type="password" minlength="6" maxlength="128" autocomplete="current-password" placeholder="Parolingizni kiriting" required>
       <div class="actions">
         <button class="btn primary" id="authSubmit" type="submit">Kirish</button><button class="btn" id="signupBtn" type="button">Ro‘yxatdan o‘tish</button>
       </div>
     </form>
     <a class="btn" href="./visitor.html" style="display:block;text-align:center;margin-top:14px;text-decoration:none">Mehmon sifatida ishonch kodi bilan o‘qish</a>
+    <div class="actions"><button class="small" type="button" id="forgotBtn">Parolni unutdingizmi?</button><button class="small" type="button" id="resendBtn">Tasdiqlash xatini qayta yuborish</button></div>
     <div id="message" role="status" aria-live="polite"></div>
     <p class="notice">Yangi akkaunt yaratish uchun «Ro‘yxatdan o‘tish» ni bosing. Email tasdiqlash talab qilinishi mumkin.</p>
   </div>
 </section>
 
+<section id="recoveryView" class="auth-wrap hidden"><div class="auth-card">
+<h1>Yangi parol o‘rnatish</h1><p class="hint">Emaildagi havola orqali kelgan bo‘lsangiz, yangi parolingizni ikki marta kiriting.</p>
+<form id="recoveryForm"><label for="newPassword">Yangi parol</label><input id="newPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+<label for="confirmPassword">Parolni takrorlang</label><input id="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+<div class="actions"><button id="updatePasswordBtn" class="btn primary" type="submit">Parolni yangilash</button><button id="cancelRecoveryBtn" class="btn" type="button">Bekor qilish</button></div></form>
+<p id="recoveryMessage" role="status" aria-live="polite"></p></div></section>
 <!-- DASHBOARD -->
 <div id="appView" class="layout hidden">
   <aside>
@@ -164,6 +174,7 @@
       <div class="card"><div class="stat-label">Shu oy</div><div class="stat-number" id="monthStat">0</div></div>
     </section>
 
+    <section id="readerCard" class="card hidden" style="margin-bottom:18px"><h2 id="readerTitle"></h2><p id="readerDate" class="muted"></p><p id="readerContent" class="entry-content"></p><button id="closeReaderBtn" class="btn" type="button">Yopish</button></section>
     <div class="workspace">
       <section class="card" id="editorCard">
         <h2 class="section" id="editorTitle">Yangi yozuv</h2>
@@ -188,457 +199,17 @@
       <section class="card" id="entriesCard">
         <h2 class="section">Yozuvlarim</h2>
         <p class="hint">Saqlangan kundaliklaring</p>
-        <input id="searchInput" type="search" placeholder="🔍 Qidirish..." aria-label="Yozuvlardan qidirish">
+        <label for="searchInput">Sarlavha yoki matndan qidirish</label><input id="searchInput" maxlength="200" type="search" placeholder="🔍 Qidirish..." aria-label="Yozuvlardan qidirish">
         <div class="filters"><label for="monthFilter">Oy bo‘yicha<input id="monthFilter" type="month"></label><button id="clearFilters" class="btn" type="button">Filtrni tozalash</button></div>
-        <div class="actions"><button id="exportBtn" class="btn" type="button">JSON zaxira yuklab olish</button><button id="retryBtn" class="btn hidden" type="button">Qayta yuklash</button></div>
-        <p id="resultsCount" class="notice" role="status"></p>
+        <div class="actions"><button id="exportBtn" class="btn" type="button">JSON zaxira yuklab olish</button><button id="importBtn" class="btn" type="button">JSON zaxirani yuklash</button><input id="importFile" class="hidden" type="file" accept=".json,application/json" aria-label="Kundalik zaxira fayli"><button id="retryBtn" class="btn hidden" type="button">Qayta yuklash</button></div>
+        <p id="backupMessage" class="notice" role="status" aria-live="polite"></p><p id="resultsCount" class="notice" role="status"></p>
         <div id="entriesList"><div class="empty">Yuklanmoqda...</div></div>
+        <nav class="actions" aria-label="Yozuvlar sahifalari"><button id="prevPageBtn" class="btn" type="button" disabled>← Oldingi</button><span id="pageLabel" class="notice">1-sahifa</span><button id="nextPageBtn" class="btn" type="button" disabled>Keyingi →</button></nav>
       </section>
     </div>
   </main>
 </div>
 
-<script>
-(() => {
-  // Faqat Supabase Project URL va Publishable key kerak.
-  const SUPABASE_URL = "https://pmdgnhkbmarvtvfprdsy.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_XVoP3QTblvFdhjs157vaWQ_yXTaYtE8";
-
-  const $ = id => document.getElementById(id);
-  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  let currentUser = null;
-  let entries = [];
-  let busy = false;
-  let fetchSequence = 0;
-  let sessionSequence = 0;
-  let formSnapshot = "";
-  let loadingEntries = false;
-  function editorSnapshot() {
-    return JSON.stringify([$("editId").value,$("entryTitle").value,$("entryDate").value,$("entryContent").value]);
-  }
-  function hasDraft() { return formSnapshot !== editorSnapshot(); }
-  function mayDiscard() { return !hasDraft() || confirm("Saqlanmagan o‘zgarishlar bor. Ularni bekor qilasizmi?"); }
-  function updateWordCount() {
-    const content = $("entryContent").value;
-    $("wordCount").textContent = `${content.trim() ? content.trim().split(/\s+/u).length : 0} ta so‘z · ${content.length} belgi`;
-  }
-  function setEditorBusy(value, seq = sessionSequence) {
-    if (seq !== sessionSequence) return;
-    busy = value;
-    for (const id of ["saveBtn","newBtn","cancelBtn","entryTitle","entryDate","entryContent"]) $(id).disabled = value;
-  }
-
-  function clearPrivateState() {
-    sessionSequence++;
-    fetchSequence++;
-    currentUser = null;
-    entries = [];
-    loadingEntries = false;
-    setEditorBusy(false);
-    resetForm();
-    $("searchInput").value = "";
-    $("monthFilter").value = "";
-    $("retryBtn").classList.add("hidden");
-    $("password").value = "";
-    $("userLabel").textContent = "";
-    $("authView").classList.remove("hidden");
-    $("appView").classList.add("hidden");
-    $("adminLink").classList.add("hidden");
-    $("sharingLink").classList.add("hidden");
-    $("mobileSharingLink").classList.add("hidden");
-    $("mobileAdminLink").classList.add("hidden");
-    render();
-  }
-  async function updateAdminUI() {
-    const ownerId = currentUser?.id;
-    const seq = sessionSequence;
-    const authenticated = !!ownerId;
-    let allowed = false;
-    if (authenticated) {
-      const { data, error } = await client.rpc("am_i_diary_admin");
-      if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
-      allowed = !error && data === true;
-    }
-    $("sharingLink").classList.toggle("hidden", !allowed);
-    $("mobileSharingLink").classList.toggle("hidden", !allowed);
-    $("adminLink").classList.toggle("hidden", !allowed);
-    $("mobileAdminLink").classList.toggle("hidden", !allowed);
-  }
-
-  function showMessage(text, error = false) {
-    $("message").textContent = text;
-    $("message").style.color = error ? "var(--danger)" : "var(--accent)";
-  }
-
-  function showSaveMessage(text, error = false) {
-    $("saveMessage").textContent = text;
-    $("saveMessage").style.color = error ? "var(--danger)" : "var(--muted)";
-  }
-
-  function localDate() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-  }
-
-  function escapeHTML(s = "") {
-    return String(s).replace(/[&<>"']/g, c => ({
-      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
-    })[c]);
-  }
-
-  function formatDate(value) {
-    const [y,m,d] = value.split("-").map(Number);
-    return new Date(y,m-1,d).toLocaleDateString("uz-UZ", {
-      day:"numeric", month:"long", year:"numeric"
-    });
-  }
-
-  $("authForm").addEventListener("submit", async event => {
-    event.preventDefault();
-    if (busy) return;
-    busy = true;
-    $("authSubmit").disabled = true;
-    showMessage("Tekshirilmoqda...");
-    try {
-      const { error } = await client.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-      if (error) throw error;
-      $("password").value = "";
-      await checkSession();
-    } catch (error) {
-      showMessage(error.message || "Kirishda xatolik yuz berdi.", true);
-    } finally {
-      busy = false;
-      $("authSubmit").disabled = false;
-    }
-  });
-
-  $("signupBtn").addEventListener("click", async () => {
-    if (busy) return;
-    const email = $("email").value.trim();
-    const password = $("password").value;
-    if (!email || !password || password.length < 8) {
-      showMessage("Email va kamida 8 belgili parol kiriting.", true); return;
-    }
-    busy = true;
-    $("signupBtn").disabled = true;
-    $("authSubmit").disabled = true;
-    showMessage("Akkaunt yaratilmoqda...");
-    try {
-      const {data,error} = await client.auth.signUp({email,password});
-      if (error) throw error;
-      $("password").value = "";
-      if (data?.session) await checkSession();
-      else showMessage("Ro‘yxatdan o‘tish so‘rovi qabul qilindi. Emailingizni tasdiqlang, so‘ng kiring.");
-    } catch (error) { showMessage(error.message || "Ro‘yxatdan o‘tishda xatolik.", true); }
-    finally { busy = false; $("signupBtn").disabled = false; $("authSubmit").disabled = false; }
-  });
-
-  async function checkSession() {
-    const seq = ++sessionSequence;
-    const { data, error } = await client.auth.getUser();
-    if (seq !== sessionSequence) return;
-    if (error || !data?.user) {
-      clearPrivateState();
-      return;
-    }
-
-    currentUser = data.user;
-    $("authView").classList.add("hidden");
-    $("appView").classList.remove("hidden");
-    $("userLabel").textContent = currentUser.email || "";
-    $("pageTitle").textContent = "Shaxsiy kundaligim";
-    $("todayLabel").textContent = new Date().toLocaleDateString("uz-UZ", {
-      weekday:"long", day:"numeric", month:"long", year:"numeric"
-    });
-    await loadEntries();
-    if (seq !== sessionSequence) return;
-    await updateAdminUI();
-  }
-
-  async function loadEntries() {
-    const seq = ++fetchSequence;
-    const ownerId = currentUser?.id;
-    $("retryBtn").classList.add("hidden");
-    if (!ownerId) return;
-    loadingEntries = true;
-    $("entriesList").innerHTML = '<div class="empty">Yozuvlar yuklanmoqda...</div>';
-    try {
-      const loaded = [];
-      const pageSize = 500;
-      for (let offset = 0; ; offset += pageSize) {
-        const { data, error } = await client.from("diary_entries")
-          .select("id,title,content,entry_date,created_at,updated_at")
-          .eq("user_id", ownerId)
-          .order("entry_date", { ascending:false })
-          .order("created_at", { ascending:false })
-          .order("id", { ascending:false })
-          .range(offset, offset + pageSize - 1);
-        if (seq !== fetchSequence || ownerId !== currentUser?.id) return;
-        if (error) throw error;
-        loaded.push(...(data || []));
-        if (!data || data.length < pageSize) break;
-      }
-      entries = loaded;
-      render();
-    } catch (error) {
-      if (seq !== fetchSequence || ownerId !== currentUser?.id) return;
-      entries = [];
-      render();
-      $("retryBtn").classList.remove("hidden");
-      $("entriesList").innerHTML = `<div class="empty">Yuklashda xatolik: ${escapeHTML(error.message || "Qayta urinib ko‘ring.")}</div>`;
-    } finally {
-      if (seq === fetchSequence) loadingEntries = false;
-    }
-  }
-
-  function renderStats() {
-    const today = localDate();
-    const month = today.slice(0,7);
-    $("totalStat").textContent = entries.length;
-    $("todayStat").textContent = entries.filter(e => e.entry_date === today).length;
-    $("monthStat").textContent = entries.filter(e => e.entry_date.startsWith(month)).length;
-  }
-
-  function renderEntries() {
-    const q = $("searchInput").value.trim().toLowerCase();
-    const month = $("monthFilter").value;
-    const filtered = entries.filter(e =>
-      (!month || e.entry_date.startsWith(month)) && `${e.title} ${e.content} ${e.entry_date}`.toLowerCase().includes(q)
-    );
-    $("resultsCount").textContent = `${filtered.length} / ${entries.length} ta yozuv`;
-    $("exportBtn").disabled = !currentUser || !entries.length;
-
-    if (!filtered.length) {
-      $("entriesList").innerHTML = entries.length
-        ? '<div class="empty">Qidiruvga mos yozuv topilmadi. Qidiruv yoki oy filtrini o‘zgartiring.</div>'
-        : '<div class="empty">📔<p>Hozircha yozuv yo‘q.</p><small>Birinchi kundalik yozuvingni yarat!</small></div>';
-      return;
-    }
-
-    $("entriesList").innerHTML = filtered.map(e => `
-      <article class="entry">
-        <div class="entry-head">
-          <div>
-            <h3>${escapeHTML(e.title)}</h3>
-            <div class="entry-date">${escapeHTML(formatDate(e.entry_date))}</div>
-          </div>
-          <div>
-            <button class="small" data-edit="${escapeHTML(e.id)}">Tahrirlash</button>
-            <button class="small delete" data-delete="${escapeHTML(e.id)}">O‘chirish</button>
-          </div>
-        </div>
-        <div class="entry-content">${escapeHTML(e.content)}</div>
-      </article>
-    `).join("");
-  }
-
-  function render() {
-    renderStats();
-    renderEntries();
-  }
-
-  function resetForm() {
-    $("entryForm").reset();
-    $("editId").value = "";
-    $("entryDate").value = localDate();
-    $("editorTitle").textContent = "Yangi yozuv";
-    $("saveBtn").textContent = "Saqlash";
-    showSaveMessage("");
-    formSnapshot = editorSnapshot();
-    updateWordCount();
-  }
-
-  function openEditor() {
-    $("editorCard").scrollIntoView({ behavior:"smooth", block:"start" });
-    $("entryTitle").focus({ preventScroll:true });
-  }
-
-  $("entryForm").addEventListener("submit", async event => {
-    event.preventDefault();
-    if (!currentUser || busy) return;
-    if (loadingEntries) { showSaveMessage("Yozuvlar yuklanishini kuting."); return; }
-
-    const title = $("entryTitle").value.trim();
-    const content = $("entryContent").value.trim();
-    const entry_date = $("entryDate").value;
-    const id = $("editId").value;
-
-    if (!title || !content || !entry_date) {
-      showSaveMessage("Barcha maydonlarni to‘ldir.", true);
-      return;
-    }
-
-    const ownerId = currentUser.id;
-    const seq = sessionSequence;
-    setEditorBusy(true);
-    showSaveMessage("Saqlanmoqda...");
-
-    try {
-      let result;
-
-      if (id) {
-        result = await client.from("diary_entries")
-          .update({ title, content, entry_date, updated_at: new Date().toISOString() })
-          .eq("id", id)
-          .eq("user_id", ownerId)
-          .select();
-      } else {
-        result = await client.from("diary_entries")
-          .insert({ title, content, entry_date, user_id: ownerId })
-          .select();
-      }
-
-      if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
-      if (result.error) throw result.error;
-      if (!result.data || result.data.length === 0) {
-        throw new Error("Yozuv o‘zgarmadi. Ruxsatlar yoki yozuv egasini tekshir.");
-      }
-
-      const saved = result.data[0];
-      entries = entries.filter(e => String(e.id) !== String(saved.id));
-      entries.push(saved);
-      entries.sort((a,b) => b.entry_date.localeCompare(a.entry_date) || b.created_at.localeCompare(a.created_at));
-      resetForm();
-      render();
-      showSaveMessage("Yozuv saqlandi ✓");
-    } catch (error) {
-      if (seq === sessionSequence && ownerId === currentUser?.id) {
-        showSaveMessage(error.message || "Saqlashda xatolik yuz berdi.", true);
-      }
-    } finally {
-      setEditorBusy(false, seq);
-    }
-  });
-
-  $("entriesList").addEventListener("click", async event => {
-    if (!currentUser || busy || loadingEntries) return;
-    const edit = event.target.closest("[data-edit]");
-    const del = event.target.closest("[data-delete]");
-
-    if (edit) {
-      const entry = entries.find(e => String(e.id) === edit.dataset.edit);
-      if (!entry || !mayDiscard()) return;
-      $("editId").value = entry.id;
-      $("entryTitle").value = entry.title;
-      $("entryContent").value = entry.content;
-      $("entryDate").value = entry.entry_date;
-      $("editorTitle").textContent = "Yozuvni tahrirlash";
-      $("saveBtn").textContent = "Yangilash";
-      formSnapshot = editorSnapshot();
-      updateWordCount();
-      showSaveMessage("");
-      openEditor();
-    }
-
-    if (del) {
-      const id = del.dataset.delete;
-      const entry = entries.find(e => String(e.id) === id);
-      if (!entry || !confirm(`"${entry.title}" yozuvini o‘chirasanmi? Uni qayta tiklab bo‘lmaydi.`)) return;
-      const ownerId = currentUser.id;
-      const seq = sessionSequence;
-      setEditorBusy(true);
-      del.disabled = true;
-      try {
-        const { error, data } = await client.from("diary_entries").delete().eq("id", id).eq("user_id", ownerId).select("id");
-        if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
-        if (error || !data?.length) throw error || new Error("Yozuv topilmadi.");
-        entries = entries.filter(e => String(e.id) !== id);
-        if ($("editId").value === id) resetForm();
-        render();
-      } catch (error) {
-        if (seq === sessionSequence && ownerId === currentUser?.id) showSaveMessage("O‘chirishda xatolik: " + (error.message || "Qayta urinib ko‘ring."), true);
-      } finally { setEditorBusy(false, seq); del.disabled = false; }
-    }
-  });
-
-  $("searchInput").addEventListener("input", renderEntries);
-  $("monthFilter").addEventListener("input", renderEntries);
-  $("clearFilters").addEventListener("click", () => {
-    $("searchInput").value = ""; $("monthFilter").value = ""; renderEntries();
-  });
-  $("retryBtn").addEventListener("click", () => { if (currentUser && !busy) loadEntries(); });
-  $("entryForm").addEventListener("input", updateWordCount);
-  window.addEventListener("beforeunload", event => {
-    if (currentUser && hasDraft()) { event.preventDefault(); event.returnValue = ""; }
-  });
-  document.addEventListener("keydown", event => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s" && currentUser) {
-      event.preventDefault(); if (!busy) $("entryForm").requestSubmit();
-    }
-  });
-  $("exportBtn").addEventListener("click", () => {
-    if (!currentUser || !entries.length) return;
-    const backup = { version:1, exported_at:new Date().toISOString(), entries:entries.map(({title,content,entry_date,created_at,updated_at}) => ({title,content,entry_date,created_at,updated_at})) };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)], {type:"application/json;charset=utf-8"}));
-    const link = document.createElement("a"); link.href = url; link.download = `daily-diary-${localDate()}.json`;
-    document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
-  });
-
-  $("newBtn").addEventListener("click", () => {
-    if (busy || !mayDiscard()) return;
-    resetForm();
-    openEditor();
-  });
-
-  $("cancelBtn").addEventListener("click", () => { if (!busy && mayDiscard()) resetForm(); });
-
-  document.querySelectorAll("[data-view]").forEach(button => {
-    button.addEventListener("click", () => {
-      if (button.dataset.view === "write" && (busy || !mayDiscard())) return;
-      document.querySelectorAll("[data-view]").forEach(b => b.classList.remove("active"));
-      button.classList.add("active");
-
-      if (button.dataset.view === "write") {
-        resetForm();
-        openEditor();
-      } else if (button.dataset.view === "entries") {
-        $("entriesCard").scrollIntoView({ behavior:"smooth" });
-      } else {
-        window.scrollTo({ top:0, behavior:"smooth" });
-      }
-    });
-  });
-
-  function setTheme(light) {
-    document.body.classList.toggle("light", light);
-    try { localStorage.setItem("daily_diary_theme", light ? "light" : "dark"); } catch {}
-  }
-
-  function toggleTheme() { setTheme(!document.body.classList.contains("light")); }
-  $("themeBtn").addEventListener("click", toggleTheme);
-  $("mobileThemeBtn").addEventListener("click", toggleTheme);
-
-  async function logout() {
-    if (!mayDiscard()) return;
-    const { error } = await client.auth.signOut();
-    if (error) {
-      alert("Chiqishda xatolik: " + error.message);
-      return;
-    }
-    clearPrivateState();
-  }
-  $("logoutBtn").addEventListener("click", logout);
-  $("mobileLogoutBtn").addEventListener("click", logout);
-
-  client.auth.onAuthStateChange((event, session) => {
-    if (!session) {
-      clearPrivateState();
-    } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-      if (currentUser?.id === session.user.id) return;
-      // Clear the previous account before verifying a changed session.
-      clearPrivateState();
-      setTimeout(() => { checkSession(); }, 0);
-    }
-  });
-
-  try { setTheme(localStorage.getItem("daily_diary_theme") === "light"); } catch { setTheme(false); }
-  resetForm();
-  checkSession();
-})();
-</script>
+<script src="./app.js?v=20261020" defer></script>
 </body>
 </html>

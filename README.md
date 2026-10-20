@@ -1,76 +1,68 @@
-# Daily Diary — ko‘p foydalanuvchili shaxsiy kundalik
+# Daily Diary
 
-Har bir foydalanuvchi o‘z emaili va paroli bilan ro‘yxatdan o‘tadi va o‘z yozuvlarini yaratadi, ko‘radi, tahrirlaydi, o‘chiradi. `public.diary_entries` jadvalida RLS `auth.uid() = user_id` sharti bilan ajratilgan. Hech bir oddiy foydalanuvchi boshqa akkaunt yozuvlariga to‘g‘ridan-to‘g‘ri kira olmaydi.
+Shaxsiy kundalik: har bir akkaunt o‘z yozuvlarini yaratadi, o‘qiydi, tahrirlaydi va o‘chiradi. Statik sayt GitHub Pages’da, autentifikatsiya va ma’lumotlar Supabase’da ishlaydi.
 
-## Ishga tushirish
+## Kundalik va tezlik
 
-1. Supabase Dashboard → Authentication → Providers → Email bo‘limida **Allow new users to sign up** yoqilganligini tekshiring; avval loyihada bu parametrni o‘chirish tavsiya etilgan. Bu sozlama yoqilmaguncha frontenddagi ro‘yxatdan o‘tish tugmasi ishlamaydi.
-2. Email confirmation yoqilgan bo‘lsa, yangi foydalanuvchi emailini tasdiqlashi kerak.
-3. GitHub Pages deployed versiyasida ikki alohida test akkaunt yarating. A akkauntda yozuv yaratib, B akkauntda ko‘rinmasligini va o‘zgartirib bo‘lmasligini tekshiring.
-4. Supabase Auth'da leaked-password protection'ni yoqing (Security Advisor ogohlantirgan).
-5. Yangi foydalanuvchilarga ishonch kodi bilan ulashish hali yoqilmagan. Ilgari mavjud adminning mehmon-kod tizimi saqlangan; ko‘p foydalanuvchili ulashish uchun alohida xavfsiz dizayn kerak.
+- Ro‘yxat bir so‘rovda ko‘pi bilan **40 ta qisqa yozuv** oladi; to‘liq matn faqat o‘qish/tahrirlash tugmasi bosilganda keladi.
+- Sana va ID bo‘yicha cursor pagination chuqur sahifalarda katta OFFSET’dan qochadi.
+- Qidiruv va oy filtri serverda ishlaydi. Qidirish 300 ms kutib bajariladi; eski javob yangi natijani almashtirmaydi. `%`, `_` va boshqa belgilar oddiy qidiruv matni hisoblanadi.
+- Jami/bugungi/oylik ko‘rsatkichlar sahifalash va qidiruvdan mustaqil hisoblanadi. “Bugun” foydalanuvchi qurilmasining mahalliy sanasidir.
+- Yozuv sarlavhasi 120, matni 20 000 belgigacha; server ham bu chegaralarni tekshiradi.
+- Supabase JS **2.118.0** MIT litsenziyasi bilan `assets/vendor/` ichida saqlangan. CDN’dan o‘zgaruvchan kod yuklanmaydi.
+- JavaScript alohida fayllarda. CSP begona skriptlarni cheklaydi; ma’lumotlar faqat shu Supabase loyihasiga yuboriladi.
 
-## Cheklovlar
+## Kirish va email
 
-- JSON eksport mavjud, JSON import hozircha yo‘q.
-- Live brauzer va ikki real akkaunt bilan end-to-end test hali bajarilmadi.
-- Bazadagi `diary_private` sxemasi uchun RLS auditini davom ettirish kerak; hozir `anon`/`authenticated` rollariga jadvallar ustida bevosita grantlar aniqlanmadi. RLS o‘chirilgan uchta jadval uchun alohida xavfsizlik tekshiruvi zarur.
-- Mehmonlar uchun yagona global savollar va umumiy ishonch kodi eski egasi uchun qoldirildi.
+Kirish, ro‘yxatdan o‘tish, parolni tiklash, email tasdiqlash xatini qayta so‘rash va recovery havolasidan yangi parol o‘rnatish mavjud. Xat so‘rashlar orasida mijozda 60 soniya kutish bor; Supabase serveridagi limitlar ham amal qiladi. Bu UI kutishi serverdagi bot/rate-limit himoyasini almashtirmaydi.
 
-## Legacy sharing va kod tafsilotlari
+Ommaviy ro‘yxatdan o‘tishdan **oldin** Supabase Dashboard’da quyidagilarni tekshiring:
 
-# Daily Diary — xususiy kundalik
+1. Authentication → URL Configuration → Site URL: `https://ergawewvw.github.io/manager/index.html`. Redirect URLs’da shu **aniq URL** ham ruxsat etilgan bo‘lsin. Kod `emailRedirectTo`/`redirectTo`ni shu manzilga yuboradi. Ruxsat etilmagan redirect Supabase sozlamasidagi Site URL’ga qaytishi mumkin.
+2. Email provider’da signup yoqilgan, email confirmation saqlangan bo‘lsin.
+3. Production email uchun custom SMTP, yuboruvchi domen va yetkazish limitlarini sozlang. Tasdiqlash/recovery xatini boshqa qurilmada ham sinang. SMTP maxfiy kalitlarini frontend yoki GitHub’ga yozmang.
+4. Leaked-password protection mavjud tarifda yoqilishi mumkin. Tarif/pullik xizmat o‘zgarishi avtomatik bajarilmaydi.
 
-Shaxsiy kundalik uchun yangi rejim: **faqat egasi kiradi, mehmonlar esa ishonch kodi va uchta maxfiy savol orqali faqat o‘qiydi**.
+Hujjatlar: [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls), [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp), [rate limits](https://supabase.com/docs/guides/auth/rate-limits).
 
-## Sahifalar
+## JSON zaxira
 
-- `index.html` — egasi uchun email/parol orqali login. Yangi akkaunt yaratish tugmasi yo‘q.
-- `visitor.html` + `visitor.js` — mehmon email/parolsiz, egasi bergan ulashish nomi va 32 belgili koddan keyin uchta maxfiy savolga javob berib yozuvlarni o‘qiydi.
-- `sharing.html` + `sharing.js` — faqat egasi kod yaratadi, o‘zgartiradi yoki bekor qiladi. Kod 1, 7 yoki 30 kun amal qiladi.
-- `admin.html` — faqat administrator uchun foydalanuvchilar ro‘yxati.
+Eksport qidiruv va joriy sahifadan mustaqil: serverdan 100 tadan olib, barcha yozuvlarni bitta JSON faylga yig‘adi. Boshlang‘ich maksimal ID eksport oynasini chegaralaydi; eksport davomida boshqa qurilmadan yozuvlarni o‘zgartirmaslik tavsiya qilinadi. Yozuvlar butun eksport davomida bitta DB snapshot’ida muzlatilmaydi.
 
-## Xavfsizlik
+Import Daily Diary `version: 1` fayllarini qabul qiladi (20 MB gacha). Fayl barcha yozuvlari tekshirilgach tasdiq so‘raladi. Har bir 100 ta yozuv alohida transaction bilan qo‘shiladi. Bir xil sana/sarlavha/matn takrorlanmaydi; eski yozuvlar ustiga yozilmaydi. Qisman tarmoq xatosidan keyin qayta yuklash mumkin. Importdagi `user_id`, ID va boshqa ortiqcha maydonlar egani o‘zgartira olmaydi. Import tarixiy `created_at`/`updated_at` qiymatlarini qayta tiklamaydi.
 
-Supabase `public.diary_entries` jadvali RLS orqali faqat admin akkauntining shaxsiy yozuvlarini o‘qish/yozish/tahrirlash/o‘chirishga ruxsat beradi. Avvalgi account-to-account ulashish RPC huquqlari va siyosatlari bekor qilingan. Anonymous mehmonlar jadvalni to‘g‘ridan-to‘g‘ri o‘qiy olmaydi; faqat `read_private_diary_verified` RPC orqali kod va uchala javob tekshirilgandan keyin yozuvlarni oladi. Avvalgi `read_private_diary_with_code` RPC uchun mehmon ruxsati bekor qilingan. Kod bazada xesh shaklida saqlanadi va eski kodni almashtirish / bekor qilish server darajasida qo‘llanadi.
+JSON fayl ochiq kundalik matnini saqlaydi. Login, parol, sessiya va ishonch kodi unga kiritilmaydi. Hisobdan chiqish kechikkan eksportni yuklab olishdan oldin bekor qiladi. Saqlanmagan tahrir uchun chiqish ogohlantirishi va Ctrl/Cmd+S saqlash mavjud.
 
-**Muhim:** Kod va uchala savol javoblarini bilgan mehmon kodning amal qilish muddati davomida barcha kundalik yozuvlarini o‘qiy oladi. Kodni hech qachon GitHub repository yoki ochiq xabarga qo‘ymang.
+## Mehmon rejimi
 
-## Saytning umumiy ochiqligi haqida
+Avvalgi admin egasining ulashish tizimi saqlangan: nom va 32 belgili ishonch kodi, keyin uchta maxfiy savol serverda tekshiriladi. Oddiy yangi akkauntlarda mehmon kodini yaratish hozircha yo‘q; umumiy savollarni barcha foydalanuvchiga ochish xavfsiz yechim emas.
 
-Saytning **kirish sahifasi** internetda ochiq bo‘lishi mumkin; **kundalik yozuvlari** esa maxfiy qoladi. GitHub repository hozircha public; uni private qilish alohida GitHub sozlamasi. GitHub Pages'ning alohida *private site* rejimi odatda Enterprise Cloud tashkilotlariga mo‘ljallangan. Oddiy GitHub Pages'da kodli mehmonlarni qabul qilish uchun kirish sahifasi internetdan ochiladigan bo‘lishi kerak.
+Mehmon ham 40 tadan sahifalaydi. Har bir sahifa so‘rovida kod va uchala javob qayta tekshiriladi. Sahifalar orasida yurish uchun kod/javoblar faqat faol oynaning xotirasida turadi; yopilganda tozalanadi, URL/localStorage’ga yozilmaydi. Kod yangilanishi, bekor qilinishi va muddati tugashi keyingi server so‘rovini to‘xtatadi. Avval o‘qilgan matnni server qaytarib ola olmaydi.
 
-Supabase'ning o‘zida yangi foydalanuvchilar ro‘yxatdan o‘tishini ham butunlay o‘chirish uchun **Authentication → Settings → Allow new users to sign up** opsiyasini o‘chiring. Bu sozlama frontenddagi tugmani yashirishdan farq qiladi; sayt faqat mavjud owner akkauntini qabul qiladi.
+Bitta kod uchun 5 xato javob barcha mehmonlarni kamida 24 soatga bloklaydi. Bu yagona kodning mavjud cheklovi. `share_access` jadvali eski akkauntli sharing tizimiga tegishli; uni anonim mehmonlar soni sifatida ishlatmang. Anonim o‘qishning ishonchli yakuniy tashrif jurnali hali mavjud emas.
 
-Sayt haqiqiy brauzerda va haqiqiy egasi login ma'lumotlari bilan boshidan oxirigacha sinovdan o‘tkazilmagan.
+## Xavfsizlik va bazadagi o‘zgarishlar
 
-## Sessiya va mehmon oynasini yopish
+`diary_entries` RLS siyosatlari `auth.uid() = user_id` bilan barcha amallarni ajratadi. Yangi sahifalash, eksport va import RPC’lari SECURITY INVOKER; faqat `authenticated` ularni chaqira oladi. Ichki `diary_private` jadvallarida ham RLS yoqilgan; oddiy rollarga jadval grantlari yo‘q. Eski kerakli SECURITY DEFINER RPC’lari owner/admin/kod tekshiruvlari bilan ishlaydi.
 
-Sessiya tugaganda yoki egasi hisobdan chiqqanda yozuvlar, tahrir oynasidagi saqlanmagan matn, qidiruv va hisob ma’lumotlari sahifadan tozalanadi. Eski login yoki saqlash so‘rovining kechikkan javobi yopilgan sessiya interfeysini qayta ochmaydi.
+2026-10-20 o‘zgarishlari server yaratgan versiyalar bilan `supabase/migrations/`da saqlangan. Ular mavjud loyiha sxemasiga mo‘ljallangan; bu papka boshlang‘ich Auth/Supabase loyihasini to‘liq yaratadigan bootstrap emas. Applied migration’ni takror ishga tushirmang.
 
-Mehmon kodni tekshirish davomida ham “Kundalikni yopish / so‘rovni bekor qilish” tugmasidan foydalanishi mumkin. Bu amal sahifada natijani ko‘rsatishni bekor qiladi; serverga yuborilgan so‘rovni yoki egasi bergan kodni bekor qilmaydi.
+## Tekshirish va joylashtirish
 
-### Tekshirish
+Node.js 22+:
 
-Node.js 20+ bilan `node --test tests/privacy.cjs` buyrug‘ini bajaring. Testlar haqiqiy HTML/JS kodini soddalashtirilgan DOM va boshqariladigan Supabase javoblari bilan tekshiradi. Haqiqiy brauzer ko‘rinishi yoki jonli Supabase loginini tekshirmaydi.
+```sh
+node --check app.js
+node --check admin.js
+node --check visitor.js
+node --check sharing.js
+node --test tests/privacy.cjs
+```
 
-## Yozish va zaxiralash
+`db/test_global_readiness.sql` — 10 000 ta vaqtinchalik yozuv va ikki vaqtinchalik akkaunt bilan haqiqiy DB/RLS, bounded pagination, literal qidiruv, to‘liq eksport va import assertlari. `db/test_guest_pages.sql` 81 ta yozuvli vaqtinchalik mehmon egasi bilan 40/40/1 sahifalarni, uch savolni, bloklashni va kodni bekor qilishni tekshiradi. Ikkalasi ham **BEGIN / ROLLBACK** bilan tugaydi. Ularni faqat boshqariladigan test oynasida ishga tushiring, yakuniy ROLLBACK’ni olib tashlamang.
 
-- Yangi yozuvga o‘tish, tahrirni bekor qilish yoki hisobdan chiqishdan oldin saqlanmagan matn uchun tasdiq so‘raladi. Sahifadan chiqishda brauzer ham ogohlantirishi mumkin.
-- `Ctrl+S` / `Cmd+S` joriy yozuvni saqlaydi. Matn ostida so‘zlar va belgilar soni ko‘rinadi.
-- Qidiruvni oy filtri bilan birga ishlatish va filtrlarni bir tugmada tozalash mumkin.
-- “JSON zaxira yuklab olish” barcha yuklangan yozuvlarni yuklab beradi; qidiruv filtri zaxirani cheklamaydi. Login, parol, sessiya va ishonch kodi zaxiraga kirmaydi. Faylda kundalik matni ochiq ko‘rinishda bo‘ladi. JSON import hali qo‘shilmagan.
-- Yozuvlar bazadan 500 tadan sahifalab olinadi; yuklash xatosidan keyin qayta urinish tugmasi bor.
-- Saqlash/o‘chirish vaqtida tahrir tugmalari, kod yaratish/bekor qilish vaqtida esa ikkala amal qulflanadi. Xatoda matn saqlanib qoladi va qayta urinish mumkin.
-- Admin va ishonch kodi sahifalari sessiya tugaganda shaxsiy ma’lumotlarni tozalaydi. Kechikkan javoblar ularni qayta ko‘rsata olmaydi.
+GitHub Actions JS testlarini push/PR’da bajaradi. GitHub Pages mavjud `main` manbasidan joylashtiriladi. Baza migration’i frontend yangilanishidan oldin qo‘llanishi kerak. Oldingi frontend yangi bounded RPC bilan mos ishlayveradi, ammo eski mijozlar barcha sahifalarni avtomatik yig‘ishi mumkin; yangi versiyani ko‘rish uchun sahifani yangilang.
 
-## Mehmon uchun ikki bosqichli tekshiruv
+## Tekshiruvning amaliy chegarasi
 
-1. `get_private_diary_questions` amaldagi ishonch kodini tekshiradi va faqat uchta savol matnini qaytaradi.
-2. `read_private_diary_verified` har bir so‘rovda kod va uchala javobni serverda tekshiradi. Faqat shundan keyin yozuvlar qaytadi. To‘g‘ri kod bilan savollarni chetlab o‘tib bo‘lmaydi.
-
-Avvaldan `diary_questions`da belgilangan savollar va SHA-256 javob xeshlari ishlatiladi; xeshlar mijozga yuborilmaydi. Javoblar bosh/oxir bo‘shliqlarsiz tekshiriladi; mavjud xeshlarga moslik uchun kichik harfga o‘tkazilgan va asl harfli variantlar qabul qilinadi. Bu mustaqil autentifikatsiya faktori (TOTP) emas, qo‘shimcha bilim tekshiruvidir.
-
-5 xato urinishdan keyin **shu ishonch kodi uchun barcha mehmonlar** kamida 24 soatga bloklanadi. Kod yangilansa yangi urinishlar oynasi boshlanadi. Kod va javoblar brauzer xotirasidagina ushlanadi; localStorage yoki URLga yozilmaydi. Yopishda ular tozalanadi. Avval o‘qib olingan matnni server qaytarib ola olmaydi.
-
-`db/guest_verification.sql` hosted Supabase uchun sxema o‘zgarishi. `db/test_guest_verification.sql` sun’iy ma’lumotlar va SQL assertlarini o‘z ichiga oladi; skript o‘zi `BEGIN` / `ROLLBACK` bilan tugaydi. Uni sxema qo‘llangandan keyin ishlating; vaqtinchalik savol xeshlari, kod va yozuv yakunda saqlanmaydi.
+DOM testlari boshqariladigan Supabase javoblari bilan ishlaydi. 10 000 ta fixture yozuv tekshiruvi bir vaqtdagi 10 000 foydalanuvchi sinovi emas. Production SMTP/redirect konfiguratsiyasi, haqiqiy email recovery oqimi va turli davlatlardan bir vaqtdagi yuklama alohida tekshirilishi kerak. Bitta mavjud DB regioni global multi-region baza degani emas. Hozirgi tekshiruvdan cheksiz foydalanuvchi yoki aniq global concurrency kafolati chiqarilmaydi.

@@ -14,13 +14,31 @@ window.authCallback = () => {};
 window.mode = 'normal';
 const user = {id:'owner',email:'owner@example.test'};
 const entry = {id:1,title:'Private title',content:'Private body',entry_date:'2026-10-16',created_at:'2026-10-16',updated_at:'2026-10-16'};
+window.fixtureEntries = [entry];
+window.rpcCalls = [];
+window.authCalls = [];
 window.supabase = {createClient: () => ({
  auth: {
+   signInWithPassword: async args => {authCalls.push(['login',args]);return {};},
+   signUp: async args => {authCalls.push(['signup',args]);return {data:{}};},
+   resetPasswordForEmail: async (...args) => {authCalls.push(['recovery',args]);return {};},
+   resend: async args => {authCalls.push(['resend',args]);return {};},
+   updateUser: async args => {authCalls.push(['update',args]);return {};},
    getUser: () => mode === 'user' ? waitForReply() : Promise.resolve({data:{user}}),
    onAuthStateChange: callback => {authCallback = callback;},
    signOut: async () => {authCallback('SIGNED_OUT', null); return {};}
  },
- rpc: (name,args) => window.rpcHandler ? rpcHandler(name,args) : location.pathname.includes('visitor') || mode === 'permission' ? waitForReply() : Promise.resolve({data:true}),
+ rpc: (name,args) => {
+   rpcCalls.push({name,args});
+   const custom=window.rpcHandler?.(name,args);if(custom!==undefined)return custom;
+   if(location.pathname.includes('visitor') || (mode === 'permission' && name==='am_i_diary_admin'))return waitForReply();
+   if(name==='get_my_diary_page'){
+    const selected=fixtureEntries.filter(e=>(!args.p_search||(e.title+' '+e.content).toLowerCase().includes(args.p_search.toLowerCase()))&&(!args.p_month||e.entry_date.startsWith(args.p_month))&&(!args.p_before_id||e.entry_date<args.p_before_date||(e.entry_date===args.p_before_date&&e.id<Number(args.p_before_id)))).sort((a,b)=>b.entry_date.localeCompare(a.entry_date)||b.id-a.id);
+    return Promise.resolve({data:{entries:selected.slice(0,40).map(e=>({id:String(e.id),title:e.title,entry_date:e.entry_date,preview:e.content.slice(0,320),truncated:e.content.length>320})),has_more:selected.length>40,stats:{total:fixtureEntries.length,today:0,month:fixtureEntries.length}}});
+   }
+   if(name==='export_my_diary_page')return Promise.resolve({data:{entries:fixtureEntries,has_more:false,max_id:'1',next_id:'1'}});
+   return Promise.resolve({data:true});
+ },
  from: () => {
    if(window.queryHandler)return queryHandler();
    const query = {select:()=>query,eq:()=>query,order:()=>query,range:()=>query,
@@ -50,14 +68,14 @@ function page(file, mode = 'normal', setup = () => {}) {
   };
   const body=element();
   const handlers={};
-  const context=vm.createContext({console,setTimeout,confirm:()=>true,addEventListener:(type,fn)=>{handlers[type]=fn;},location:{pathname:file},localStorage:{getItem(){return null;},setItem(){}},
+  const context=vm.createContext({console,setTimeout,clearTimeout,URL,confirm:()=>true,addEventListener:(type,fn)=>{handlers[type]=fn;},location:{pathname:file,href:'https://ergawewvw.github.io/manager/'+file},localStorage:{getItem(){return null;},setItem(){}},
     document:{getElementById:id=>{const found=elements.get(id)||[...elements.values()].flatMap(el=>el.children).find(el=>el.id===id);assert.ok(found,'missing element '+id);return found;},querySelectorAll:()=>[],addEventListener:(type,fn)=>{handlers[type]=fn;},body,createElement:tag=>{const node=element();node.tagName=tag;return node;}},
     window:null});
   context.window=context;
   vm.runInContext(mock,context);
   context.mode=mode;
   setup(context);
-  const script=file.endsWith('.html') && !['visitor.html','sharing.html'].includes(file)? [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][0][1]:fs.readFileSync(path.join(root,file==='sharing.html'?'sharing.js':'visitor.js'),'utf8');
+  const script=fs.readFileSync(path.join(root,({'index.html':'app.js','admin.html':'admin.js','sharing.html':'sharing.js','visitor.html':'visitor.js'})[file]),'utf8');
   vm.runInContext(script,context,{filename:file});
   return {context,handlers,get:id=>elements.get(id),hidden:id=>elements.get(id).classList.contains('hidden')};
 }
@@ -108,12 +126,14 @@ test('new/cancel preserve an unsaved draft when discard is declined',async()=>{
  let warned=false;p.handlers.beforeunload({preventDefault(){warned=true;}});assert.equal(warned,true);
  p.context.confirm=()=>true;await p.get('cancelBtn').fire('click');assert.equal(p.get('entryContent').value,'');
 });
-test('month and search filters show a distinct no-match result',async()=>{
- const p=page('index.html');await settle();
- p.get('monthFilter').value='2020-01';await p.get('monthFilter').fire('input');
- assert.match(p.get('entriesList').innerHTML,/mos yozuv topilmadi/);assert.equal(p.get('resultsCount').textContent,'0 / 1 ta yozuv');
- await p.get('clearFilters').fire('click');assert.match(p.get('entriesList').innerHTML,/Private title/);
- p.get('searchInput').value='No matching words';await p.get('searchInput').fire('input');assert.match(p.get('entriesList').innerHTML,/mos yozuv topilmadi/);
+test('server filters reset pagination and show a distinct no-match result',async()=>{
+ const p=page('index.html');await settle();let scheduled;
+ p.context.setTimeout=fn=>{scheduled=fn;return 1;};p.context.clearTimeout=()=>{};
+ p.get('monthFilter').value='2020-01';await p.get('monthFilter').fire('input');scheduled();await settle();
+ assert.match(p.get('entriesList').innerHTML,/mos yozuv topilmadi/);assert.match(p.get('resultsCount').textContent,/0 ta · jami 1/);
+ await p.get('clearFilters').fire('click');await settle();assert.match(p.get('entriesList').innerHTML,/Private title/);
+ p.get('searchInput').value='No matching words';await p.get('searchInput').fire('input');scheduled();await settle();assert.match(p.get('entriesList').innerHTML,/mos yozuv topilmadi/);
+ assert.equal(p.context.rpcCalls.filter(c=>c.name==='get_my_diary_page').at(-1).args.p_search,'No matching words');
 });
 test('word count and save shortcut work without discarding text',async()=>{
  const p=page('index.html');await settle();p.get('entryContent').value='bir ikki\nuch';await p.get('entryForm').fire('input');
@@ -129,14 +149,15 @@ test('saving is serialized and late save responses cannot restore signed-out not
  p.context.authCallback('SIGNED_OUT',null);p.context.resolvePending({data:[{id:2,title:'New title',content:'New body',entry_date:'2026-10-16',created_at:'2026-10-16'}]});await save;
  assert.equal(p.hidden('appView'),true);assert.doesNotMatch(p.get('entriesList').innerHTML,/New body/);assert.equal(p.get('saveMessage').textContent,'');
 });
-test('pagination loads beyond the first database page',async()=>{
- let ranges=[];
- const p=page('index.html','normal',context=>{
-  context.queryHandler=()=>{
-   let offset=0;const query={select:()=>query,eq:()=>query,order:()=>query,range:(start,end)=>{offset=start;ranges.push([start,end]);return query;},
-    then:resolve=>Promise.resolve({data:offset===0?Array.from({length:500},(_,id)=>({id,title:'Page one',content:'text',entry_date:'2026-10-01',created_at:'2026-10-01'})):[{id:501,title:'Last page',content:'text',entry_date:'2026-09-01',created_at:'2026-09-01'}]}).then(resolve)};return query;
-  };
- });await settle();assert.deepEqual(ranges,[[0,499],[500,999]]);assert.equal(p.get('totalStat').textContent,501);assert.match(p.get('entriesList').innerHTML,/Last page/);
+test('initial read is bounded and keyset navigation preserves full totals',async()=>{
+ const p=page('index.html','normal',context=>{context.fixtureEntries=Array.from({length:501},(_,i)=>({id:i+1,title:'Note '+(i+1),content:'body',entry_date:'2026-10-01'}));});
+ await settle();assert.equal(p.context.rpcCalls.filter(c=>c.name==='get_my_diary_page').length,1);
+ assert.equal(p.get('totalStat').textContent,501);assert.equal((p.get('entriesList').innerHTML.match(/<article/g)||[]).length,40);
+ assert.match(p.get('entriesList').innerHTML,/Note 501/);assert.doesNotMatch(p.get('entriesList').innerHTML,/Note 461</);
+ await p.get('nextPageBtn').fire('click');
+ assert.equal(p.context.rpcCalls.filter(c=>c.name==='get_my_diary_page').at(-1).args.p_before_id,'462');
+ assert.match(p.get('entriesList').innerHTML,/Note 461/);assert.equal(p.get('pageLabel').textContent,'2-sahifa');
+ await p.get('prevPageBtn').fire('click');assert.match(p.get('entriesList').innerHTML,/Note 501/);assert.equal(p.get('pageLabel').textContent,'1-sahifa');
 });
 test('sharing creation/revocation cannot overlap, and sign-out erases late codes',async()=>{
  const p=page('sharing.html');await settle();assert.equal(p.hidden('ownerPanel'),false);let calls=[];
@@ -160,7 +181,7 @@ test('admin list and a delayed refresh are cleared when the session ends',async(
  p.context.resolvePending({data:[{email:'private@example.test'}]});await refresh;
  assert.equal(p.get('rows').children.length,0);assert.equal(p.hidden('dashboard'),true);
 });
-test('JSON backup includes all loaded notes even with an empty search result',async()=>{
+test('JSON backup exports independently of the current search filter',async()=>{
  const p=page('index.html');await settle();p.get('searchInput').value='no match';await p.get('searchInput').fire('input');
  let downloaded;p.context.Blob=Blob;p.context.URL={createObjectURL:blob=>{downloaded=blob;return 'blob:test';},revokeObjectURL(){}};
  await p.get('exportBtn').fire('click');const backup=JSON.parse(await downloaded.text());
@@ -200,4 +221,79 @@ test('a verified empty diary is shown as empty rather than an invalid code',asyn
  const p=page('visitor.html');await openGuestChallenge(p);const verify=p.get('questionForm').fire('submit');
  p.context.resolvePending({data:{status:'ok',entries:[],has_more:false}});await verify;
  assert.equal(p.hidden('readSection'),false);assert.match(p.get('message').textContent,/hozircha bo‘sh/);
+});
+
+test('a stale page response cannot replace a newer filter result',async()=>{
+ const p=page('index.html','normal',context=>{context.fixtureEntries=Array.from({length:45},(_,i)=>({id:i+1,title:'Note '+i,content:'text',entry_date:'2026-10-01'}));});await settle();
+ p.context.rpcHandler=name=>name==='get_my_diary_page'?p.context.waitForReply():undefined;
+ const old=p.get('nextPageBtn').fire('click');let scheduled;
+ p.context.setTimeout=fn=>{scheduled=fn;return 1;};p.context.clearTimeout=()=>{};
+ p.get('searchInput').value='fresh';await p.get('searchInput').fire('input');scheduled();
+ p.context.resolvePending({data:{entries:[{id:'1',title:'Old result',entry_date:'2026-10-01'}],stats:{total:45,today:0,month:45},has_more:false}});await old;
+ assert.doesNotMatch(p.get('entriesList').innerHTML,/Old result/);
+ p.context.resolvePending({data:{entries:[{id:'2',title:'Fresh result',entry_date:'2026-10-01'}],stats:{total:45,today:0,month:45},has_more:false}});await settle();
+ assert.match(p.get('entriesList').innerHTML,/Fresh result/);assert.equal(p.get('pageLabel').textContent,'1-sahifa');
+});
+test('export collects every backup page and excludes owner IDs',async()=>{
+ const p=page('index.html');await settle();let pageNo=0,downloaded;
+ p.context.rpcHandler=name=>name==='export_my_diary_page'?Promise.resolve({data:{entries:[{title:'Backup '+(++pageNo),content:'Full body',entry_date:'2026-10-01',user_id:'not-exported'}],has_more:pageNo===1,next_id:String(pageNo),max_id:'2'}}):undefined;
+ p.context.Blob=Blob;p.context.URL={createObjectURL:blob=>{downloaded=blob;return 'blob:test';},revokeObjectURL(){}};
+ await p.get('exportBtn').fire('click');const backup=JSON.parse(await downloaded.text());
+ assert.equal(backup.entries.length,2);assert.equal(backup.entries[1].title,'Backup 2');assert.equal(backup.entries[0].user_id,undefined);
+});
+test('sign-out cancels an in-progress export before a file can be downloaded',async()=>{
+ const p=page('index.html');await settle();let downloaded=false;
+ p.context.rpcHandler=name=>name==='export_my_diary_page'?p.context.waitForReply():undefined;
+ p.context.Blob=Blob;p.context.URL={createObjectURL(){downloaded=true;return 'blob:test';},revokeObjectURL(){}};
+ const task=p.get('exportBtn').fire('click');p.context.authCallback('SIGNED_OUT',null);
+ p.context.resolvePending({data:{entries:[{title:'Private export',content:'body'}],has_more:false}});await task;
+ assert.equal(downloaded,false);assert.equal(p.get('backupMessage').textContent,'');
+});
+test('import strips untrusted owner IDs and reports duplicate skips',async()=>{
+ const p=page('index.html');await settle();let batch;
+ p.context.rpcHandler=(name,args)=>{if(name==='import_my_diary_entries'){batch=args.p_entries;return Promise.resolve({data:{inserted:0,skipped:1}});}};
+ const json={version:1,entries:[{title:'Restored',content:'private text',entry_date:'2026-10-01',user_id:'another-owner',id:900}]};
+ p.get('importFile').files=[{size:500,text:async()=>JSON.stringify(json)}];
+ await p.get('importFile').fire('change');assert.equal(batch.length,1);assert.equal(batch[0].user_id,undefined);assert.equal(batch[0].id,undefined);
+ assert.match(p.get('backupMessage').textContent,/0 ta yozuv qo‘shildi; 1 ta takroriy/);
+});
+test('invalid backup dates abort before any import is sent',async()=>{
+ const p=page('index.html');await settle();
+ p.get('importFile').files=[{size:100,text:async()=>JSON.stringify({version:1,entries:[{title:'Bad date',content:'body',entry_date:'2026-02-30'}]})}];
+ await p.get('importFile').fire('change');assert.equal(p.context.rpcCalls.filter(c=>c.name==='import_my_diary_entries').length,0);
+ assert.match(p.get('backupMessage').textContent,/noto‘g‘ri/);assert.equal(p.get('saveBtn').disabled,false);
+});
+test('a late full-note response is discarded after sign-out',async()=>{
+ const p=page('index.html');await settle();
+ p.context.queryHandler=()=>{const q={select:()=>q,eq:()=>q,single:()=>p.context.waitForReply()};return q;};
+ const read={dataset:{read:'1'}};
+ const task=p.get('entriesList').handlers.click({target:{closest:s=>s==='[data-read]'?read:null}});
+ p.context.authCallback('SIGNED_OUT',null);p.context.resolvePending({data:{id:'1',title:'Late secret',content:'Hidden full body',entry_date:'2026-10-01'}});await task;
+ assert.equal(p.hidden('readerCard'),true);assert.equal(p.get('readerContent').textContent,'');
+});
+test('recovery events open the password form without exposing the diary',async()=>{
+ const p=page('index.html');await settle();p.context.authCallback('PASSWORD_RECOVERY',{user:{id:'owner'}});
+ assert.equal(p.hidden('appView'),true);assert.equal(p.hidden('recoveryView'),false);
+ p.get('newPassword').value='different1';p.get('confirmPassword').value='different2';await p.get('recoveryForm').fire('submit');
+ assert.equal(p.context.authCalls.filter(c=>c[0]==='update').length,0);
+ p.get('confirmPassword').value='different1';await p.get('recoveryForm').fire('submit');
+ assert.equal(p.context.authCalls.filter(c=>c[0]==='update').length,1);assert.equal(p.hidden('recoveryView'),true);
+ assert.equal(p.get('newPassword').value,'');assert.match(p.get('message').textContent,/Parol yangilandi/);
+});
+test('confirmation email requests include the production redirect and enforce a cooldown',async()=>{
+ const p=page('index.html');await settle();p.context.authCallback('SIGNED_OUT',null);p.get('email').value='fixture@example.test';
+ await p.get('resendBtn').fire('click');await p.get('resendBtn').fire('click');
+ const calls=p.context.authCalls.filter(c=>c[0]==='resend');assert.equal(calls.length,1);
+ assert.equal(calls[0][1].options.emailRedirectTo,'https://ergawewvw.github.io/manager/index.html');
+ assert.match(p.get('message').textContent,/soniya kuting/);
+});
+test('guest verification loads one page and later pages are reverified and discarded on close',async()=>{
+ const p=page('visitor.html');await openGuestChallenge(p);let verify=p.get('questionForm').fire('submit');
+ p.context.resolvePending({data:{status:'ok',entries:[{title:'First page',content:'body',entry_date:'2026-10-01'}],has_more:true,next_offset:40}});await verify;
+ assert.equal(p.context.pending.length,0);assert.equal(p.get('guestNextBtn').disabled,false);
+ let requested;
+ p.context.rpcHandler=(name,args)=>{requested={name,args:{...args,p_answers:args.p_answers.slice()}};return p.context.waitForReply();};
+ const next=p.get('guestNextBtn').fire('click');assert.equal(requested.args.p_offset,40);assert.deepEqual(Array.from(requested.args.p_answers),['fixture','fixture','fixture']);
+ await p.get('closeBtn').fire('click');p.context.resolvePending({data:{status:'ok',entries:[{title:'Late page',content:'private'}],has_more:false}});await next;
+ assert.equal(p.hidden('readSection'),true);assert.equal(p.get('notes').children.length,0);assert.equal(p.get('guestNextBtn').disabled,true);
 });

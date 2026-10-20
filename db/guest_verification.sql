@@ -105,14 +105,14 @@ begin
   update diary_private.guest_answer_attempts set failed_attempts=0,window_started_at=pg_catalog.now(),blocked_until=null where owner_id=v_owner;
   with page as (
     select d.entry_date,d.title,d.content,d.created_at,d.id from public.diary_entries d where d.user_id=v_owner
-    order by d.entry_date desc,d.created_at desc,d.id desc offset p_offset limit 501
+    order by d.entry_date desc,d.created_at desc,d.id desc offset p_offset limit 41
   ), items as (
-    select * from page order by entry_date desc,created_at desc,id desc limit 500
+    select * from page order by entry_date desc,created_at desc,id desc limit 40
   )
   select coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('entry_date',i.entry_date,'title',i.title,'content',i.content)
     order by i.entry_date desc,i.created_at desc,i.id desc) from items i),'[]'::jsonb),
-    (select pg_catalog.count(*)>500 from page) into v_items,v_more;
-  return pg_catalog.jsonb_build_object('status','ok','entries',v_items,'has_more',v_more,'next_offset',p_offset+500);
+    (select pg_catalog.count(*)>40 from page) into v_items,v_more;
+  return pg_catalog.jsonb_build_object('status','ok','entries',v_items,'has_more',v_more,'next_offset',p_offset+40);
 end;
 $$;
 revoke all on function public.read_private_diary_verified(text,text,text[],integer) from public,anon,authenticated;

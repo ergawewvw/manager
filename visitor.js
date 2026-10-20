@@ -7,6 +7,41 @@
   );
   let readSequence = 0;
   let gate = null;
+  let reading = null;
+  let offset = 0;
+  let hasMore = false;
+  function clearCredentials() { if (reading) reading.answers.fill(""); reading = null; }
+  function pageControls(loading = false) {
+    $("guestPrevBtn").disabled = loading || !reading || offset === 0;
+    $("guestNextBtn").disabled = loading || !reading || !hasMore;
+    $("guestPageLabel").textContent = reading ? `${Math.floor(offset / 40) + 1}-sahifa` : "";
+  }
+  function renderNotes(entries) {
+    $("notes").replaceChildren();
+    for (const item of entries) {
+      const article = document.createElement("article");
+      const heading = document.createElement("h2"); heading.textContent = item.title;
+      const date = document.createElement("small"); date.textContent = item.entry_date;
+      const body = document.createElement("p"); body.textContent = item.content;
+      article.append(heading,date,body); $("notes").append(article);
+    }
+    $("readSection").classList.remove("hidden");
+  }
+  async function navigatePage(target) {
+    if (!reading) return;
+    const seq = ++readSequence, credentials = reading, answers = credentials.answers.slice();
+    pageControls(true);
+    try {
+      const { data,error } = await db.rpc("read_private_diary_verified", {p_alias:credentials.alias,p_code:credentials.code,p_answers:answers,p_offset:target});
+      if (seq !== readSequence) return;
+      if (error) throw error;
+      if (data?.status !== "ok" || !Array.isArray(data.entries)) { resetAccess(); say(resultMessage(data),true); return; }
+      offset = target; hasMore = data.has_more === true; renderNotes(data.entries); say(`${data.entries.length} ta yozuv — faqat o‘qish rejimi.`);
+    } catch { if (seq === readSequence) say("Sahifa yuklanmadi. Qayta urinib ko‘ring.",true); }
+    finally { answers.fill(""); if (seq === readSequence) pageControls(); }
+  }
+  $("guestPrevBtn").addEventListener("click", () => { if (!$("guestPrevBtn").disabled) return navigatePage(Math.max(0, offset - 40)); });
+  $("guestNextBtn").addEventListener("click", () => { if (!$("guestNextBtn").disabled) return navigatePage(offset + 40); });
   function say(message, isError = false) {
     $("message").textContent = message;
     $("message").style.color = isError ? "#ff8a9b" : "#b5bdd1";
@@ -19,7 +54,7 @@
     for (const input of $("questionFields").querySelectorAll("input")) input.value = "";
   }
   function resetAccess() {
-    gate = null;
+    gate = null; clearCredentials(); offset = 0; hasMore = false; pageControls();
     clearRead(); clearAnswers();
     $("questionFields").replaceChildren();
     $("questionForm").classList.add("hidden");
@@ -91,36 +126,22 @@
     clearRead();
     say("2-bosqich: javoblar tekshirilmoqda...");
     try {
-      const entries = [];
-      let offset = 0;
-      while (true) {
-        const { data, error } = await db.rpc("read_private_diary_verified", {
-          p_alias:credentials.alias, p_code:credentials.code, p_answers:answers, p_offset:offset
-        });
-        if (seq !== readSequence) return;
-        if (error) throw error;
-        if (data?.status !== "ok" || !Array.isArray(data.entries)) {
-          clearAnswers();
-          if (data?.status !== "invalid_answers") resetAccess();
-          say(resultMessage(data), true); return;
-        }
-        entries.push(...data.entries);
-        if (!data.has_more) break;
-        if (!Number.isInteger(data.next_offset) || data.next_offset <= offset) throw new Error("Invalid page");
-        offset = data.next_offset;
+      const { data, error } = await db.rpc("read_private_diary_verified", {
+        p_alias:credentials.alias, p_code:credentials.code, p_answers:answers, p_offset:0
+      });
+      if (seq !== readSequence) return;
+      if (error) throw error;
+      if (data?.status !== "ok" || !Array.isArray(data.entries)) {
+        clearAnswers(); if (data?.status !== "invalid_answers") resetAccess();
+        say(resultMessage(data), true); return;
       }
+      clearCredentials();
+      reading = {alias:credentials.alias,code:credentials.code,answers:answers.slice()};
+      offset = 0; hasMore = data.has_more === true;
       clearAnswers(); gate = null;
-      $("questionFields").replaceChildren();
-      $("questionForm").classList.add("hidden");
-      for (const item of entries) {
-        const article = document.createElement("article");
-        const heading = document.createElement("h2"); heading.textContent = item.title;
-        const date = document.createElement("small"); date.textContent = item.entry_date;
-        const body = document.createElement("p"); body.textContent = item.content;
-        article.append(heading,date,body); $("notes").append(article);
-      }
-      $("readSection").classList.remove("hidden");
-      say(entries.length ? `Ikki bosqich ham tasdiqlandi. ${entries.length} ta yozuv — faqat o‘qish rejimi.` : "Ikki bosqich ham tasdiqlandi. Kundalik hozircha bo‘sh.");
+      $("questionFields").replaceChildren(); $("questionForm").classList.add("hidden");
+      renderNotes(data.entries); pageControls();
+      say(data.entries.length ? `Ikki bosqich ham tasdiqlandi. ${data.entries.length} ta yozuv — faqat o‘qish rejimi.` : "Ikki bosqich ham tasdiqlandi. Kundalik hozircha bo‘sh.");
     } catch {
       if (seq !== readSequence) return;
       clearAnswers(); say("Javoblarni tekshirib bo‘lmadi. Qayta urinib ko‘ring.", true);
