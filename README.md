@@ -66,3 +66,14 @@ GitHub Actions JS testlarini push/PR’da bajaradi. GitHub Pages mavjud `main` m
 ## Tekshiruvning amaliy chegarasi
 
 DOM testlari boshqariladigan Supabase javoblari bilan ishlaydi. 10 000 ta fixture yozuv tekshiruvi bir vaqtdagi 10 000 foydalanuvchi sinovi emas. Production SMTP/redirect konfiguratsiyasi, haqiqiy email recovery oqimi va turli davlatlardan bir vaqtdagi yuklama alohida tekshirilishi kerak. Bitta mavjud DB regioni global multi-region baza degani emas. Hozirgi tekshiruvdan cheksiz foydalanuvchi yoki aniq global concurrency kafolati chiqarilmaydi.
+
+
+## Ekran maxfiyligi
+
+`privacy.js` va `privacy.css` shaxsiy kundalik, mehmonning maxfiy savollari va yozuvlari, recovery, ishonch kodi va admin ro‘yxatini himoyalaydi. Boshqa oyna/tabga o‘tish, sahifani tark etish, Esc va brauzerga yetib kelgan ayrim skrinshot tugmalari maxfiylik pardasini yoqadi. Qaytganda «Davom etish» bosiladi; draft saqlanadi. Bu faqat ekran pardasi, qayta autentifikatsiya emas. Akkaunt sessiyasi tugasa mavjud logout tozalash qoidalari ishlaydi.
+
+Yozuvlar ochiq paytda ko‘rinadigan umumiy sana suv belgisi bor; shaxsiy identifikatorlar yig‘ilmaydi. Print CSS brauzer menyusi va PDF chop etishda barcha sahifa ma’lumotlarini yashiradi. Egasi uchun JSON backup va ishonch kodini nusxalash saqlangan.
+
+Oddiy veb-sahifa OS/brauzer skrinshotini, ekran yozuvini yoki tashqi kamerani to‘liq bloklay olmaydi. Blur/keyboard hodisalari kafolatli skrinshot detektori emas. CSS/JS’ni o‘zgartira oladigan o‘quvchi bu vizual choralarni chetlab o‘tishi mumkin; o‘qishga ruxsatni faqat ishonchli odamlarga bering.
+
+Tekshirish: `node --check privacy.js` va `node --test tests/*.cjs`.

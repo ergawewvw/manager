@@ -1,0 +1,21 @@
+/* No fades: private content is concealed as soon as the curtain activates. */
+#privacyCurtain[hidden], #privacyDock[hidden], #privacyWatermark[hidden] { display:none!important }
+#privacyDock { position:fixed; right:14px; bottom:14px; z-index:2147483645; display:flex; flex-direction:column; gap:5px; align-items:flex-end; max-width:calc(100vw - 28px); padding:10px 12px; border:1px solid #3b4660; border-radius:12px; background:#121a2c; color:#eef2ff; box-shadow:0 4px 18px #0003; font:12px system-ui,sans-serif }
+#privacyDock button, #privacyCurtain button { width:auto; margin:0; cursor:pointer; border:1px solid #a799ff; border-radius:9px; background:#7968ed; color:white; padding:10px 16px; font:600 14px system-ui,sans-serif }
+#privacyDock small { color:#c0c8db; font-size:11px }
+#privacyDock button:focus-visible, #privacyCurtain button:focus-visible { outline:3px solid #d1c9ff; outline-offset:3px }
+html.dd-private main { padding-bottom:120px }
+#privacyWatermark { position:fixed; inset:-20%; z-index:2147483644; display:grid; grid-template-columns:repeat(3,minmax(220px,1fr)); align-items:center; gap:60px 30px; overflow:hidden; pointer-events:none; user-select:none; transform:rotate(-18deg); opacity:.1; color:#b4aaff; font:600 14px system-ui,sans-serif }
+body.light #privacyWatermark { color:#5949a0; opacity:.13 }
+html.dd-locked body > :not(#privacyCurtain), html.dd-locked body > :not(#privacyCurtain) * { visibility:hidden!important }
+html.dd-locked { overflow:hidden }
+#privacyCurtain { position:fixed; inset:0; z-index:2147483647; display:grid; place-items:center; padding:24px; background:#0b1020; color:#eef2ff; font:16px system-ui,sans-serif }
+#privacyCurtain > div { width:min(100%,420px); border:1px solid #38425a; border-radius:18px; padding:28px; background:#121a2c }
+#privacyCurtain h2 { margin:0 0 12px; font-size:24px }
+#privacyCurtain p { color:#bac3d9; line-height:1.7; margin:0 0 22px }
+@media print {
+  /* Also works without JS, from the browser menu, and for Save as PDF. */
+  html body > *, html.dd-locked body > * { display:none!important }
+  html body { background:white!important; color:black!important; margin:24px!important }
+  html body::after { display:block!important; visibility:visible!important; content:"Daily Diary — Maxfiy ma’lumot. Chop etishda yozuvlar yashirilgan."; font:16px system-ui,sans-serif }
+}

@@ -98,6 +98,8 @@
     }
   </style>
 <link rel="stylesheet" href="./design.css?v=20261020c">
+<link rel="stylesheet" href="./privacy.css?v=20261020d">
+<script src="./privacy.js?v=20261020d" defer></script>
 </head>
 <body>
 <noscript><p>Daily Diary ishlashi uchun brauzerda JavaScript yoqilgan bo‘lishi kerak.</p></noscript>
@@ -132,14 +134,14 @@
   </div>
 </section>
 
-<section id="recoveryView" class="auth-wrap hidden"><div class="auth-card">
+<section id="recoveryView" data-private-surface class="auth-wrap hidden"><div class="auth-card">
 <h1>Yangi parol o‘rnatish</h1><p class="hint">Emaildagi havola orqali kelgan bo‘lsangiz, yangi parolingizni ikki marta kiriting.</p>
 <form id="recoveryForm"><label for="newPassword">Yangi parol</label><input id="newPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
 <label for="confirmPassword">Parolni takrorlang</label><input id="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
 <div class="actions"><button id="updatePasswordBtn" class="btn primary" type="submit">Parolni yangilash</button><button id="cancelRecoveryBtn" class="btn" type="button">Bekor qilish</button></div></form>
 <p id="recoveryMessage" role="status" aria-live="polite"></p></div></section>
 <!-- DASHBOARD -->
-<div id="appView" class="layout hidden">
+<div id="appView" data-private-surface class="layout hidden">
   <aside>
     <div class="brand">
       <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">

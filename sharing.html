@@ -20,13 +20,15 @@ button{background:#8978ff;color:white;border:0;cursor:pointer}
 button:disabled{opacity:.55}.danger{background:#8a4054}
 .hidden{display:none!important}.code{font:700 18px ui-monospace,monospace;word-break:break-all}
 #result{background:#1b263c;padding:16px;border-radius:12px;overflow-wrap:anywhere}
-</style></head>
+</style><link rel="stylesheet" href="./privacy.css?v=20261020d">
+<script src="./privacy.js?v=20261020d" defer></script>
+</head>
 <body><main>
 <a href="./index.html">← Shaxsiy kundaligimga qaytish</a>
 <h1>Kundaligim uchun ishonch kodi</h1>
 <p>Kundaligingiz faqat sizga tegishli. O‘qishga ruxsat bermoqchi bo‘lgan odamga shu yerda yaratilgan nom va kodni bering. Mehmon login qilmaydi: koddan keyin siz belgilagan uchta maxfiy savolga ham javob beradi. Yozuvni o‘zgartira olmaydi.</p>
 <p id="gate" role="status">Egasi tekshirilmoqda...</p>
-<section id="ownerPanel" class="panel hidden">
+<section id="ownerPanel" data-private-surface class="panel hidden">
 <form id="shareForm">
 <label for="alias">Kundalik nomi (4–32 belgi)</label>
 <input id="alias" pattern="[a-z0-9_-]{4,32}" minlength="4" maxlength="32" autocomplete="off" placeholder="mening_kundaligim" required>

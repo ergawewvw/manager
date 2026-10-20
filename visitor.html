@@ -25,7 +25,9 @@ article h2{font-size:19px;margin:0 0 7px;overflow-wrap:anywhere}
 article small{color:#aab6ce}
 article p{white-space:pre-wrap;overflow-wrap:anywhere;color:#eef2ff}
 #message{min-height:23px;font-size:14px}
-</style></head>
+</style><link rel="stylesheet" href="./privacy.css?v=20261020d">
+<script src="./privacy.js?v=20261020d" defer></script>
+</head>
 <body><main>
 <a href="./index.html">← Asosiy sahifaga qaytish</a>
 <h1>Mehmon sifatida kundalik o‘qish</h1>
@@ -38,7 +40,7 @@ article p{white-space:pre-wrap;overflow-wrap:anywhere;color:#eef2ff}
 <input id="code" type="password" minlength="32" maxlength="32" autocomplete="off" required placeholder="32 belgili maxfiy kod">
 <button id="openBtn" type="submit">1-bosqich: kodni tekshirish</button>
 </form>
-<form id="questionForm" class="hidden">
+<form id="questionForm" data-private-surface class="hidden">
 <h2>2-bosqich: maxfiy savollar</h2>
 <p>Uchala javob ham to‘g‘ri bo‘lishi kerak. 5 ta xato urinishdan keyin bu kod uchun tekshiruv kamida 24 soatga to‘xtatiladi.</p>
 <div id="questionFields"></div>
@@ -47,7 +49,7 @@ article p{white-space:pre-wrap;overflow-wrap:anywhere;color:#eef2ff}
 <button type="button" id="closeBtn" class="hidden">Kundalikni yopish / so‘rovni bekor qilish</button>
 <div id="message" role="status" aria-live="polite"></div>
 </section>
-<section id="readSection" class="card hidden">
+<section id="readSection" data-private-surface class="card hidden">
 <h2>O‘qishga ruxsat berilgan yozuvlar</h2>
 <div id="notes"></div><nav aria-label="Mehmon yozuvlari sahifalari"><button id="guestPrevBtn" type="button" disabled>← Oldingi</button><p id="guestPageLabel" role="status"></p><button id="guestNextBtn" type="button" disabled>Keyingi →</button></nav>
 </section>

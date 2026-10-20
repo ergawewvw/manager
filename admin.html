@@ -14,12 +14,14 @@ main{max-width:1000px;margin:auto;padding:32px 20px}h1{font-size:28px}p{color:#a
 button,a{font:inherit}button,.link{background:#7665ed;color:white;border:0;border-radius:9px;padding:12px 16px;text-decoration:none;cursor:pointer}
 table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;border-bottom:1px solid #33405a;word-break:break-word}
 #users{overflow-x:auto}.hidden{display:none}#status{min-height:26px}
-</style></head><body><main>
+</style><link rel="stylesheet" href="./privacy.css?v=20261020d">
+<script src="./privacy.js?v=20261020d" defer></script>
+</head><body><main>
 <a href="./index.html" class="link">← Kundalikka qaytish</a>
 <h1>Administrator paneli</h1>
 <p>Foydalanuvchilar ro‘yxatini faqat tasdiqlangan administrator ko‘ra oladi. Maxfiy kundalik yozuvlari bu ro‘yxatda ko‘rsatilmaydi.</p>
 <section class="card" id="gate"><h2>Ruxsatni tekshirish</h2><p id="status">Tekshirilmoqda...</p></section>
-<section class="card hidden" id="dashboard"><h2>Foydalanuvchilar ro‘yxati</h2>
+<section class="card hidden" id="dashboard" data-private-surface><h2>Foydalanuvchilar ro‘yxati</h2>
 <button id="refresh" type="button">Yangilash</button>
 <p id="counter"></p><div id="users">
 <table><thead><tr><th>Email</th><th>Ro‘yxatdan o‘tgan</th><th>Oxirgi kirish</th><th>Email tasdiqlanganmi?</th></tr></thead><tbody id="rows"></tbody></table>
