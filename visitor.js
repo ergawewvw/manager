@@ -1,6 +1,9 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
+  // Only the shared diary alias travels in the URL; never the code or answers.
+  const requestedDiary = new URL(window.location.href).searchParams.get("diary") || "";
+  if (/^[a-zA-Z0-9_-]{4,32}$/.test(requestedDiary)) $("alias").value = requestedDiary.toLowerCase();
   const db = window.supabase.createClient(
     "https://pmdgnhkbmarvtvfprdsy.supabase.co",
     "sb_publishable_XVoP3QTblvFdhjs157vaWQ_yXTaYtE8"

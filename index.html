@@ -151,6 +151,7 @@
     <button class="nav active" data-view="dashboard">◫ &nbsp; Bosh sahifa</button>
     <button class="nav" data-view="entries">▤ &nbsp; Yozuvlarim</button>
     <button class="nav" data-view="write">✎ &nbsp; Bugun yozish</button>
+    <a class="nav" id="findDiaryLink" href="#diaryFinder">⌕ &nbsp; Kundalik qidirish</a>
     <a class="nav hidden" id="sharingLink" href="./sharing.html">Ishonch kodini boshqarish</a>
     <a id="adminLink" href="./admin.html" class="nav hidden">Admin panel</a>
     <button class="nav" id="themeBtn">☼ &nbsp; Mavzu</button>
@@ -163,6 +164,7 @@
       <img class="logo" src="./assets/logo.png" width="43" height="43" alt="">
       <div><h2>Daily Diary</h2><p>Shaxsiy kundaligingiz</p></div>
       <button class="btn" id="mobileThemeBtn" type="button">Mavzu</button>
+      <a class="btn" id="mobileFindDiaryLink" href="#diaryFinder">Kundalik qidirish</a>
       <a class="btn hidden" id="mobileSharingLink" href="./sharing.html">Ishonch kodi</a>
       <a class="btn hidden" id="mobileAdminLink" href="./admin.html">Admin</a>
       <button class="btn" id="mobileLogoutBtn" type="button">Chiqish</button>
@@ -175,6 +177,15 @@
       </div>
       <button class="btn primary" id="newBtn">＋ Yangi yozuv</button>
     </header>
+
+    <section class="card" id="diaryFinder" aria-labelledby="diaryFinderTitle" style="margin-bottom:22px;scroll-margin-top:20px">
+      <h2 class="section" id="diaryFinderTitle">Kundalik qidirish</h2>
+      <p class="hint" id="diaryFinderHint">Boshqa kundalikni o‘qish uchun egasi bergan nomni kiriting. Keyingi sahifada ishonch kodi va maxfiy savollar so‘raladi. Akkauntingizdan chiqishingiz shart emas.</p>
+      <form id="diaryFinderForm" class="filters" role="search" aria-label="Boshqa kundalikni qidirish" action="./visitor.html" method="get">
+        <label for="diaryAlias">Kundalik nomi<input id="diaryAlias" name="diary" type="search" minlength="4" maxlength="32" pattern="[a-zA-Z0-9_-]{4,32}" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Masalan: mening_kundaligim" aria-describedby="diaryFinderHint" required></label>
+        <button class="btn primary" type="submit">Kundalikni ochish</button>
+      </form>
+    </section>
 
     <section class="stats">
       <div class="card"><div class="stat-label">Jami yozuvlar</div><div class="stat-number" id="totalStat">0</div></div>

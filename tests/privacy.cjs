@@ -96,6 +96,18 @@ for(const mode of ['user','permission'])test('delayed '+mode+' verification cann
   assert.equal(p.hidden('appView'),true);assert.equal(p.hidden('adminLink'),true);
 });
 const challenge = {status:'questions_required',questions:[1,2,3].map(number=>({number,text:'Question '+number}))};
+test('dashboard diary links prefill only the alias and still require the two-stage gate',()=>{
+ const p=page('visitor.html','normal',context=>{context.location.href='https://ergawewvw.github.io/manager/visitor.html?diary=My_Diary&code=ignored&answers=ignored';});
+ assert.equal(p.get('alias').value,'my_diary');assert.equal(p.get('code').value,'');
+ assert.equal(p.hidden('questionForm'),true);assert.equal(p.hidden('readSection'),true);
+ assert.equal(p.context.rpcCalls.length,0);assert.equal(p.context.authCalls.length,0);
+});
+test('malformed diary aliases in a link never populate the access form',()=>{
+ for(const alias of ['<script>','a','a'.repeat(33),'../diary']){
+  const p=page('visitor.html','normal',context=>{context.location.href='https://ergawewvw.github.io/manager/visitor.html?diary='+encodeURIComponent(alias);});
+  assert.equal(p.get('alias').value,'');assert.equal(p.context.rpcCalls.length,0);
+ }
+});
 test('closing a guest read discards its response while a fresh two-stage read succeeds',async()=>{
   const p=page('visitor.html');p.get('alias').value='diary';p.get('code').value='a'.repeat(32);
   const first=p.get('accessForm').fire('submit');assert.equal(p.hidden('closeBtn'),false);

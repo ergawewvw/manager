@@ -6,6 +6,8 @@ Shaxsiy kundalik: har bir akkaunt o‘z yozuvlarini yaratadi, o‘qiydi, tahrirl
 
 ## Kundalik va tezlik
 
+Dashboarddagi **Kundalik qidirish** bo‘limi orqali akkauntdan chiqmasdan boshqa kundalikning egasi bergan nomini kiritish mumkin. O‘qish sahifasiga faqat nom uzatiladi; ishonch kodi va uchta maxfiy savolning tekshiruvi o‘z joyida qoladi. Desktop va mobil menyuda ham bo‘limga havola bor.
+
 - Ro‘yxat bir so‘rovda ko‘pi bilan **40 ta qisqa yozuv** oladi; to‘liq matn faqat o‘qish/tahrirlash tugmasi bosilganda keladi.
 - Sana va ID bo‘yicha cursor pagination chuqur sahifalarda katta OFFSET’dan qochadi.
 - Qidiruv va oy filtri serverda ishlaydi. Qidirish 300 ms kutib bajariladi; eski javob yangi natijani almashtirmaydi. `%`, `_` va boshqa belgilar oddiy qidiruv matni hisoblanadi.
