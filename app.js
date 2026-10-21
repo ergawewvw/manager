@@ -21,6 +21,7 @@
   let formSnapshot = "", cursor = null, pageHistory = [], hasMore = false, searchTimer;
   let stats = { total:0, today:0, month:0 }, backupBusy = false, recoveryMode = false;
   let authBusy = false, emailCooldownUntil = 0;
+  let readerComments = null;
   const redirectUrl = () => new URL("./index.html", window.location.href).href;
   function localDate() {
     const d = new Date();
@@ -70,6 +71,8 @@
   }
   function closeReader() {
     detailSequence++;
+    readerComments?.dispose(); readerComments = null;
+    $("readerComments").replaceChildren();
     for (const id of ["readerTitle","readerDate","readerContent"]) $(id).textContent = "";
     $("readerCard").classList.add("hidden");
   }
@@ -257,6 +260,11 @@
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
         } else {
           $("readerTitle").textContent = data.title; $("readerDate").textContent = formatDate(data.entry_date); $("readerContent").textContent = data.content;
+          readerComments?.dispose(); $("readerComments").replaceChildren();
+          if (window.DiaryComments) readerComments = window.DiaryComments.mount($("readerComments"), {
+            client,entryId:String(data.id),owner:true,
+            isCurrent:() => detail === detailSequence && seq === sessionSequence && ownerId === currentUser?.id
+          });
           $("readerCard").classList.remove("hidden"); $("readerCard").scrollIntoView({behavior:"smooth",block:"start"});
         }
         showSaveMessage("");

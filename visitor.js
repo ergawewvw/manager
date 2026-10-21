@@ -13,6 +13,8 @@
   let reading = null;
   let offset = 0;
   let hasMore = false;
+  let commentWidgets = [];
+  function clearCommentWidgets() { for (const widget of commentWidgets) widget.dispose(); commentWidgets = []; }
   function clearCredentials() { if (reading) reading.answers.fill(""); reading = null; }
   function pageControls(loading = false) {
     $("guestPrevBtn").disabled = loading || !reading || offset === 0;
@@ -20,13 +22,24 @@
     $("guestPageLabel").textContent = reading ? `${Math.floor(offset / 40) + 1}-sahifa` : "";
   }
   function renderNotes(entries) {
+    clearCommentWidgets();
     $("notes").replaceChildren();
+    const credentials = reading, sequence = readSequence;
     for (const item of entries) {
       const article = document.createElement("article");
       const heading = document.createElement("h2"); heading.textContent = item.title;
       const date = document.createElement("small"); date.textContent = item.entry_date;
       const body = document.createElement("p"); body.textContent = item.content;
       article.append(heading,date,body); $("notes").append(article);
+      if (window.DiaryComments && /^\d+$/.test(String(item.id))) {
+        const comments = document.createElement("div"); article.append(comments);
+        commentWidgets.push(window.DiaryComments.mount(comments, {
+          client:db,entryId:String(item.id),owner:false,
+          credentials:() => reading === credentials ? reading : null,
+          isCurrent:() => readSequence === sequence && reading === credentials,
+          onAccessLost:data => { readSequence++;resetAccess();say(resultMessage(data),true); }
+        }));
+      }
     }
     $("readSection").classList.remove("hidden");
   }
@@ -39,7 +52,7 @@
       if (seq !== readSequence) return;
       if (error) throw error;
       if (data?.status !== "ok" || !Array.isArray(data.entries)) { resetAccess(); say(resultMessage(data),true); return; }
-      offset = target; hasMore = data.has_more === true; renderNotes(data.entries); say(`${data.entries.length} ta yozuv — faqat o‘qish rejimi.`);
+      offset = target; hasMore = data.has_more === true; renderNotes(data.entries); say(`${data.entries.length} ta yozuv. Izohlar yozuv ostida.`);
     } catch { if (seq === readSequence) say("Sahifa yuklanmadi. Qayta urinib ko‘ring.",true); }
     finally { answers.fill(""); if (seq === readSequence) pageControls(); }
   }
@@ -50,6 +63,7 @@
     $("message").style.color = isError ? "#ff8a9b" : "#b5bdd1";
   }
   function clearRead() {
+    clearCommentWidgets();
     $("notes").replaceChildren();
     $("readSection").classList.add("hidden");
   }
@@ -144,7 +158,7 @@
       clearAnswers(); gate = null;
       $("questionFields").replaceChildren(); $("questionForm").classList.add("hidden");
       renderNotes(data.entries); pageControls();
-      say(data.entries.length ? `Ikki bosqich ham tasdiqlandi. ${data.entries.length} ta yozuv — faqat o‘qish rejimi.` : "Ikki bosqich ham tasdiqlandi. Kundalik hozircha bo‘sh.");
+      say(data.entries.length ? `Ikki bosqich ham tasdiqlandi. ${data.entries.length} ta yozuv. Izoh qoldirishingiz mumkin.` : "Ikki bosqich ham tasdiqlandi. Kundalik hozircha bo‘sh.");
     } catch {
       if (seq !== readSequence) return;
       clearAnswers(); say("Javoblarni tekshirib bo‘lmadi. Qayta urinib ko‘ring.", true);

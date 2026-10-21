@@ -1,0 +1,16 @@
+.diary-comments { margin-top:22px; padding-top:16px; border-top:1px solid var(--border,#34415b); color:var(--text,#eef2ff) }
+.diary-comments [hidden] { display:none!important }
+.diary-comments .comment-actions { display:flex; gap:9px; flex-wrap:wrap; align-items:center; margin:8px 0 }
+.diary-comments button.comment-button { width:auto; margin:0; padding:9px 13px; border:1px solid var(--border,#4a5270); border-radius:9px; background:var(--soft,#242d45); color:var(--text,#eef2ff); cursor:pointer; font:inherit; font-size:13px }
+.diary-comments button:focus-visible { outline:2px solid var(--accent,#b4aaff); outline-offset:3px }
+.diary-comments button:disabled { opacity:.5; cursor:wait }
+.diary-comments .comment-form { margin:14px 0; padding:15px; border:1px solid var(--border,#34415b); border-radius:12px }
+.diary-comments label { display:block; margin:0 0 8px; font-size:14px; color:var(--text,#eef2ff) }
+.diary-comments input,.diary-comments textarea { display:block; width:100%; padding:11px 12px; margin:8px 0 12px; border:1px solid var(--border,#4a5270); border-radius:9px; background:var(--bg,#0b1020); color:var(--text,#eef2ff); font:inherit }
+.diary-comments textarea { min-height:120px; resize:vertical; line-height:1.6 }
+.diary-comments .comment-hint,.diary-comments .comment-status { color:var(--muted,#b5bdd1); font-size:12px; line-height:1.6; margin:9px 0; white-space:normal }
+.diary-comments .diary-comment { border-top:1px solid var(--border,#34415b); padding:14px 0 }
+.diary-comments .diary-comment strong { display:block; overflow-wrap:anywhere }
+.diary-comments .diary-comment small { display:block; margin-top:5px; color:var(--muted,#b5bdd1); font-size:11px }
+.diary-comments .diary-comment p { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.6; color:var(--text,#eef2ff); margin:10px 0 }
+.diary-comments button.comment-delete { color:var(--danger,#ff8a9b) }

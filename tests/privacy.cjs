@@ -222,6 +222,23 @@ async function openGuestChallenge(p) {
  const request=p.get('accessForm').fire('submit');p.context.resolvePending({data:challenge});await request;
  for(const input of p.get('questionFields').children.filter(n=>n.tagName==='input'))input.value='fixture';
 }
+test('guest reader mounts comments for the correct entry and disposes them when closed',async()=>{
+ let mounted,disposed=false;
+ const p=page('visitor.html','normal',context=>{context.DiaryComments={mount:(container,options)=>{mounted=options;return {dispose(){disposed=true;}};}};});
+ await openGuestChallenge(p);const verify=p.get('questionForm').fire('submit');
+ p.context.resolvePending({data:{status:'ok',entries:[{id:'9007199254740999',title:'Fixture note',content:'body',entry_date:'2026-10-21'}],has_more:false}});await verify;
+ assert.equal(mounted.entryId,'9007199254740999');assert.equal(mounted.owner,false);assert.equal(mounted.isCurrent(),true);
+ assert.equal(mounted.credentials().answers[0],'fixture');
+ await p.get('closeBtn').fire('click');assert.equal(disposed,true);assert.equal(mounted.isCurrent(),false);assert.equal(mounted.credentials(),null);
+});
+test('owner full-note reader mounts moderation and disposes comments on session expiry',async()=>{
+ let mounted,disposed=false;
+ const p=page('index.html','normal',context=>{context.DiaryComments={mount:(container,options)=>{mounted=options;return {dispose(){disposed=true;}};}};});await settle();
+ p.context.queryHandler=()=>{const q={select:()=>q,eq:()=>q,single:async()=>({data:{id:'1',title:'Private title',content:'Private body',entry_date:'2026-10-16'}})};return q;};
+ await p.get('entriesList').handlers.click({target:{closest:selector=>selector==='[data-read]'?{dataset:{read:'1'}}:null}});
+ assert.equal(mounted.owner,true);assert.equal(mounted.entryId,'1');assert.equal(mounted.isCurrent(),true);
+ p.context.authCallback('SIGNED_OUT',null);assert.equal(disposed,true);assert.equal(mounted.isCurrent(),false);assert.equal(p.hidden('readerCard'),true);
+});
 test('wrong answers reveal no notes and retain the challenge for another try',async()=>{
  const p=page('visitor.html');await openGuestChallenge(p);const verify=p.get('questionForm').fire('submit');
  p.context.resolvePending({data:{status:'invalid_answers',attempts_remaining:4}});await verify;

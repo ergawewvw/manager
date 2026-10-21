@@ -10,5 +10,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --check app.js && node --check admin.js && node --check visitor.js && node --check sharing.js && node --check privacy.js
+      - run: node --check app.js && node --check admin.js && node --check visitor.js && node --check sharing.js && node --check privacy.js && node --check comments.js
       - run: node --test tests/*.cjs

@@ -29,6 +29,14 @@ Ommaviy ro‘yxatdan o‘tishdan **oldin** Supabase Dashboard’da quyidagilarni
 
 Hujjatlar: [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls), [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp), [rate limits](https://supabase.com/docs/guides/auth/rate-limits).
 
+## Yozuvlarga izohlar
+
+Mehmon yozuv ostidagi **Izoh yozish** tugmasini bosadi, **Ismingiz?** bosqichidan o‘tib, keyin izoh yozadi. Ism 2–60, izoh 1–2000 belgi. Ism odamning o‘zi kiritadigan yorliq, tasdiqlangan shaxs emas. Ism va draft browser storage’ga yozilmaydi.
+
+Izohlar yozuvga bog‘liq holda `diary_private.entry_comments` jadvalida saqlanadi. Mehmonlar izohlarni o‘qish va yozish uchun har safar amaldagi kod hamda uchala maxfiy javob bilan tekshiriladi. Public guest RPC’larning SECURITY DEFINER bo‘lishi shu capability tekshiruvi uchun zarur; jadval va private yordamchilarga bevosita anon/authenticated huquqi yo‘q. Owner RPC’lari `auth.uid()` va yozuv egasini tekshiradi. Kundalik egasi **To‘liq o‘qish → Izohlar** orqali izohlarni ko‘rishi, yozishi va o‘chirishi mumkin. Asosiy yozuv o‘chirilsa uning izohlari ham o‘chadi.
+
+Izohlar 20 tadan cursor orqali yuklanadi. Bir daqiqada bitta ism uchun 3, bitta kundalik uchun jami 30 izoh chegarasi bor; bu shaxsni tasdiqlash emas, oddiy spam cheklovi. Takroriy so‘rovlar UUID orqali bitta izoh bo‘lib qoladi. Oynani yopish yoki akkauntdan chiqish kechikkan javoblar bilan eski izohlarni qayta ochmaydi. `db/test_entry_comments.sql` haqiqiy bazada sintetik ma’lumotlar bilan ruxsatlar, rate limit, 20/7 sahifalar, deduplication, moderatsiya, revocation va cascade’ni tekshiradi; yakunda ROLLBACK qiladi.
+
 ## JSON zaxira
 
 Eksport qidiruv va joriy sahifadan mustaqil: serverdan 100 tadan olib, barcha yozuvlarni bitta JSON faylga yig‘adi. Boshlang‘ich maksimal ID eksport oynasini chegaralaydi; eksport davomida boshqa qurilmadan yozuvlarni o‘zgartirmaslik tavsiya qilinadi. Yozuvlar butun eksport davomida bitta DB snapshot’ida muzlatilmaydi.
@@ -60,7 +68,8 @@ node --check app.js
 node --check admin.js
 node --check visitor.js
 node --check sharing.js
-node --test tests/privacy.cjs
+node --check comments.js
+node --test tests/*.cjs
 ```
 
 `db/test_global_readiness.sql` — 10 000 ta vaqtinchalik yozuv va ikki vaqtinchalik akkaunt bilan haqiqiy DB/RLS, bounded pagination, literal qidiruv, to‘liq eksport va import assertlari. `db/test_guest_pages.sql` 81 ta yozuvli vaqtinchalik mehmon egasi bilan 40/40/1 sahifalarni, uch savolni, bloklashni va kodni bekor qilishni tekshiradi. Ikkalasi ham **BEGIN / ROLLBACK** bilan tugaydi. Ularni faqat boshqariladigan test oynasida ishga tushiring, yakuniy ROLLBACK’ni olib tashlamang.
