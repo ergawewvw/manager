@@ -40,6 +40,13 @@
     if (Number.isNaN(date.getTime())) return "";
     return "Joylangan: " + date.toLocaleString("uz-UZ", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false});
   }
+  function diaryMarkup(value) {
+    return escapeHTML(String(value||""))
+      .replace(/^## (.+)$/gm,"<strong>$1</strong>")
+      .replace(/\\*\\*([^\\n*]+)\\*\\*/g,"<strong>$1</strong>")
+      .replace(/\\*([^\\n*]+)\\*/g,"<em>$1</em>")
+      .replace(/^- (.+)$/gm,"• $1");
+  }
   function showMessage(text, error = false) { $("message").textContent = text; $("message").style.color = error ? "var(--danger)" : "var(--accent)"; }
   function showSaveMessage(text, error = false) { $("saveMessage").textContent = text; $("saveMessage").style.color = error ? "var(--danger)" : "var(--muted)"; }
   function authError(error) {
@@ -335,7 +342,7 @@
           $("editorTitle").textContent = "Yozuvni tahrirlash"; $("saveBtn").textContent = "Yangilash";
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
         } else {
-          currentReadId=String(data.id);$("historyPanel").classList.add("hidden"); $("readerTitle").textContent = (data.pinned?"📌 ":"")+data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at) + " · " + entryExtras(data); $("readerContent").textContent = data.content;
+          currentReadId=String(data.id);$("historyPanel").classList.add("hidden"); $("readerTitle").textContent = (data.pinned?"📌 ":"")+data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at) + " · " + entryExtras(data); $("readerContent").innerHTML = diaryMarkup(data.content);
           $("readerPhoto").replaceChildren();
           if(data.photo_path){
             const photo=await client.storage.from("diary-photos").createSignedUrl(data.photo_path,120);
