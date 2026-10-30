@@ -228,7 +228,7 @@
   let calendarMonth = new Date(), currentReadId = null;
   const moodNames = {great:"🤩 Ajoyib",good:"🙂 Yaxshi",okay:"😐 Oddiy",bad:"😔 Yomon",awful:"😞 Juda yomon"};
   function entryExtras(e) {
-    return (e.pinned ? "📌 " : "") + (moodNames[e.mood] ? moodNames[e.mood]+" · " : "") +
+    return (e.private_only ? "🔒 " : "") + (e.pinned ? "📌 " : "") + (moodNames[e.mood] ? moodNames[e.mood]+" · " : "") +
       (Array.isArray(e.tags) ? e.tags.map(t=>"#"+t).join(" ") : "");
   }
   function tagsFromInput() {
@@ -251,8 +251,7 @@
         markup+='<button type="button" data-day="'+date+'" class="'+(byDate[date]?"has-entry":"")+'" title="'+(byDate[date]||0)+' ta post">'+n+'</button>';
       }
       $("calendarGrid").innerHTML=markup;
-      const totalWords=all.length; // complete text intentionally not loaded into the dashboard
-      const mo=Object.entries(all.reduce((o,e)=>(e.mood&&(o[e.mood]=(o[e.mood]||0)+1),o),{})).sort((a,b)=>b[1]-a[1])[0];
+            const mo=Object.entries(all.reduce((o,e)=>(e.mood&&(o[e.mood]=(o[e.mood]||0)+1),o),{})).sort((a,b)=>b[1]-a[1])[0];
       $("diaryStats").innerHTML='<div><strong>'+all.length+'</strong><p>Postlar</p></div><div><strong>'+Object.keys(byDate).length+'</strong><p>Yozilgan kunlar</p></div><div><strong>'+(mo?moodNames[mo[0]]:"—")+'</strong><p>Eng ko‘p kayfiyat</p></div><div><strong>'+all.filter(x=>x.pinned).length+'</strong><p>Mahkamlangan</p></div>';
       const today=new Date(),matches=all.filter(x=>x.entry_date.slice(5)===String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0")&&x.entry_date.slice(0,4)!==String(today.getFullYear()));
       $("onThisDay").textContent=matches.length?"📖 O‘tgan yillarning shu kunida: "+matches.length+" ta post":"";
@@ -284,7 +283,7 @@
   function resetForm() {
     $("entryForm").reset(); $("editId").value = ""; $("entryDate").value = localDate();
     $("editorTitle").textContent = "Yangi yozuv"; $("saveBtn").textContent = "Saqlash";
-    $("entryMood").value="";$("entryTags").value="";$("entryPinned").checked=false;
+    $("entryMood").value="";$("entryTags").value="";$("entryPinned").checked=false;$("entryPrivate").checked=false;
     showSaveMessage(""); formSnapshot = editorSnapshot(); updateWordCount();
   }
   function openEditor() { $("editorCard").scrollIntoView({behavior:"smooth",block:"start"}); $("entryTitle").focus({preventScroll:true}); }
@@ -293,7 +292,7 @@
     const title = $("entryTitle").value.trim(), content = $("entryContent").value.trim(), entry_date = $("entryDate").value, id = $("editId").value;
     if (!title || !content || !entry_date || title.length>120 || content.length>20000) { showSaveMessage("Maydonlarni to‘g‘ri to‘ldiring.",true); return; }
     const ownerId = currentUser.id, seq = sessionSequence;
-    const metadata={mood:$("entryMood").value||null,tags:tagsFromInput(),pinned:$("entryPinned").checked};
+    const metadata={mood:$("entryMood").value||null,tags:tagsFromInput(),pinned:$("entryPinned").checked,private_only:$("entryPrivate").checked};
     setEditorBusy(true); showSaveMessage("Saqlanmoqda...");
     try {
       let result;
@@ -316,11 +315,11 @@
       const seq = sessionSequence, detail = ++detailSequence, ownerId = currentUser.id;
       setEditorBusy(true); showSaveMessage("Yozuv ochilmoqda...");
       try {
-        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at,mood,tags,pinned").eq("id",id).eq("user_id",ownerId).single();
+        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at,mood,tags,pinned,private_only").eq("id",id).eq("user_id",ownerId).single();
         if (seq !== sessionSequence || ownerId !== currentUser?.id || detail !== detailSequence) return;
         if (error || !data) throw error || new Error("Yozuv topilmadi.");
         if (edit) {
-          $("entryMood").value=data.mood||"";$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;
+          $("entryMood").value=data.mood||"";$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;$("entryPrivate").checked=!!data.private_only;
           $("editId").value = String(data.id); $("entryTitle").value = data.title; $("entryContent").value = data.content; $("entryDate").value = data.entry_date;
           $("editorTitle").textContent = "Yozuvni tahrirlash"; $("saveBtn").textContent = "Yangilash";
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
