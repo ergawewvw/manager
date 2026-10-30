@@ -292,6 +292,8 @@
     const title = $("entryTitle").value.trim(), content = $("entryContent").value.trim(), entry_date = $("entryDate").value, id = $("editId").value;
     if (!title || !content || !entry_date || title.length>120 || content.length>20000) { showSaveMessage("Maydonlarni to‘g‘ri to‘ldiring.",true); return; }
     const ownerId = currentUser.id, seq = sessionSequence;
+    const photoFile=$("entryPhoto").files[0];
+    if(photoFile && (!["image/jpeg","image/png","image/webp"].includes(photoFile.type)||photoFile.size>5242880)){showSaveMessage("Surat JPG/PNG/WebP va 5 MB dan kichik bo‘lsin.",true);return;}
     const metadata={mood:$("entryMood").value||null,tags:tagsFromInput(),pinned:$("entryPinned").checked,private_only:$("entryPrivate").checked};
     setEditorBusy(true); showSaveMessage("Saqlanmoqda...");
     try {
@@ -301,6 +303,15 @@
       if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
       if (result.error) throw result.error;
       if (!result.data?.length) throw new Error("Yozuv o‘zgarmadi. Qayta urinib ko‘ring.");
+      if(photoFile){
+        const entryId=String(result.data[0].id);
+        const ext=photoFile.type==="image/png"?"png":photoFile.type==="image/webp"?"webp":"jpg";
+        const path=ownerId+"/"+entryId+"/"+crypto.randomUUID()+"."+ext;
+        const upload=await client.storage.from("diary-photos").upload(path,photoFile,{contentType:photoFile.type,cacheControl:"60"});
+        if(upload.error)throw new Error("Post saqlandi, lekin surat yuklanmadi: "+upload.error.message);
+        const linked=await client.from("diary_entries").update({photo_path:path}).eq("id",entryId).eq("user_id",ownerId);
+        if(linked.error)throw new Error("Post saqlandi, lekin surat biriktirilmadi: "+linked.error.message);
+      }
       resetForm(); await loadEntries({reset:true});renderInsights();
       if (seq === sessionSequence && ownerId === currentUser?.id) showSaveMessage("Yozuv saqlandi ✓");
     } catch (error) { if (seq === sessionSequence && ownerId === currentUser?.id) showSaveMessage(authError(error),true); }
@@ -315,7 +326,7 @@
       const seq = sessionSequence, detail = ++detailSequence, ownerId = currentUser.id;
       setEditorBusy(true); showSaveMessage("Yozuv ochilmoqda...");
       try {
-        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at,mood,tags,pinned,private_only").eq("id",id).eq("user_id",ownerId).single();
+        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at,mood,tags,pinned,private_only,photo_path").eq("id",id).eq("user_id",ownerId).single();
         if (seq !== sessionSequence || ownerId !== currentUser?.id || detail !== detailSequence) return;
         if (error || !data) throw error || new Error("Yozuv topilmadi.");
         if (edit) {
@@ -325,6 +336,13 @@
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
         } else {
           currentReadId=String(data.id);$("historyPanel").classList.add("hidden"); $("readerTitle").textContent = (data.pinned?"📌 ":"")+data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at) + " · " + entryExtras(data); $("readerContent").textContent = data.content;
+          $("readerPhoto").replaceChildren();
+          if(data.photo_path){
+            const photo=await client.storage.from("diary-photos").createSignedUrl(data.photo_path,120);
+            if(!photo.error && photo.data?.signedUrl && seq===sessionSequence && detail===detailSequence){
+              const img=document.createElement("img");img.src=photo.data.signedUrl;img.alt="Postga biriktirilgan surat";img.loading="lazy";img.style.cssText="max-width:100%;max-height:500px;border-radius:12px;margin:12px 0";$("readerPhoto").append(img);
+            }
+          }
           readerComments?.dispose(); $("readerComments").replaceChildren();
           if (window.DiaryComments) readerComments = window.DiaryComments.mount($("readerComments"), {
             client,entryId:String(data.id),owner:true,
