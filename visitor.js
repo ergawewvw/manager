@@ -28,7 +28,11 @@
     for (const item of entries) {
       const article = document.createElement("article");
       const heading = document.createElement("h2"); heading.textContent = item.title;
-      const date = document.createElement("small"); date.textContent = item.entry_date;
+      const date = document.createElement("small");
+      const published = item.created_at ? new Date(item.created_at) : null;
+      const publishedLabel = published && !Number.isNaN(published.getTime())
+        ? published.toLocaleString("uz-UZ", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}) : "";
+      date.textContent = item.entry_date + (publishedLabel ? " · Joylangan: " + publishedLabel : "");
       const body = document.createElement("p"); body.textContent = item.content;
       article.append(heading,date,body); $("notes").append(article);
       if (window.DiaryComments && /^\d+$/.test(String(item.id))) {
