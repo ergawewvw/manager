@@ -238,6 +238,48 @@
     return (e.private_only ? "🔒 " : "") + (e.pinned ? "📌 " : "") + (moodNames[e.mood] ? moodNames[e.mood]+" · " : "") +
       (Array.isArray(e.tags) ? e.tags.map(t=>"#"+t).join(" ") : "");
   }
+
+  // Lightweight, private on-device keyword heuristic. No post text is sent to a new service.
+  const moodLexicon = {
+    great:["juda xursand","nihoyatda xursand","ajoyib","zo'r","zo‘r","muvaffaqiyat","g'alaba","g‘alaba","yutdim","erishdim","fantastic","amazing","excellent","thrilled","won","achievement","best day","happy birthday"],
+    good:["xursand","quvonch","yaxshi","yoqdi","mamnun","shukur","rahmat","kuldi","yoqimli","mazza","nice","happy","glad","grateful","enjoyed","fun","good day","great"],
+    okay:["oddiy","odatdagidek","tinch","normal","o'rtacha","o‘rtacha","unchalik emas","not bad","fine","okay","alright","usual","ordinary","average"],
+    bad:["xafa","zerikdim","charchadim","qiyin","yomon","xafaman","tushkun","bezovta","xavotir","stress","sad","tired","upset","worried","hard","difficult","disappointed","bad day"],
+    awful:["juda yomon","juda xafa","dahshat","qo'rqinchli","qo‘rqinchli","umidsiz","qattiq yig'ladim","qattiq yig‘ladim","terrible","horrible","devastated","miserable","worst day","heartbroken"]
+  };
+  let moodManuallySet=false, moodInferTimer;
+  function inferMood(input) {
+    const text=(" "+String(input||"").toLocaleLowerCase().replace(/[!?.,;:()\n]/g," ")+" ").replace(/\\s+/g," ");
+    const scores={great:0,good:0,okay:0,bad:0,awful:0};
+    const words=text.trim().split(/\\s+/).filter(Boolean);
+    if(words.length<5)return null;
+    for(const [mood,phrases] of Object.entries(moodLexicon)){
+      for(const phrase of phrases){
+        const term=phrase.toLocaleLowerCase();
+        const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,"\\  function tagsFromInput() {");
+        const re=new RegExp("(^|\\\\s)"+escaped+"(?=\\\\s|$)","g");
+        const hits=[...text.matchAll(re)].length;
+        scores[mood]+=Math.min(hits,3)*(term.includes(" ")?3:2);
+      }
+    }
+    const winner=Object.entries(scores).sort((x,y)=>y[1]-x[1])[0];
+    if(!winner||winner[1]<2)return null;
+    const second=Object.values(scores).sort((x,y)=>y-x)[1];
+    if(winner[1]===second)return null;
+    return winner[0];
+  }
+  function updateMoodSuggestion() {
+    const predicted=inferMood($("entryTitle").value+" "+$("entryContent").value);
+    const label=$("moodSuggestion");
+    if(!predicted) {label.textContent="Kayfiyatni aniq taxmin qilib bo‘lmadi. Uni qo‘lda belgilashingiz mumkin.";return;}
+    label.textContent="Matnga ko‘ra tavsiya: "+moodNames[predicted]+" (taxminiy). "+(moodManuallySet?"Siz tanlagan kayfiyat saqlanadi.":"Avtomatik tanlandi; o‘zgartirishingiz mumkin.");
+    if(!moodManuallySet) $("entryMood").value=predicted;
+  }
+  $("entryMood").addEventListener("change",()=>{moodManuallySet=true;updateMoodSuggestion();});
+  ["entryTitle","entryContent"].forEach(id=>$(id).addEventListener("input",()=>{
+    clearTimeout(moodInferTimer); moodInferTimer=setTimeout(updateMoodSuggestion,350);
+  }));
+
   function tagsFromInput() {
     return [...new Set($("entryTags").value.split(",").map(x=>x.trim().toLowerCase()).filter(x=>/^[a-z0-9_-]{1,24}$/.test(x)))].slice(0,10);
   }
@@ -290,7 +332,7 @@
   function resetForm() {
     $("entryForm").reset(); $("editId").value = ""; $("entryDate").value = localDate();
     $("editorTitle").textContent = "Yangi yozuv"; $("saveBtn").textContent = "Saqlash";
-    $("entryMood").value="";$("entryTags").value="";$("entryPinned").checked=false;$("entryPrivate").checked=false;
+    moodManuallySet=false;$("moodSuggestion").textContent="Matn yozsangiz, kayfiyat avtomatik tavsiya qilinadi. Bu taxminiy tahlil; istasangiz o‘zgartiring.";$("entryMood").value="";$("entryTags").value="";$("entryPinned").checked=false;$("entryPrivate").checked=false;
     showSaveMessage(""); formSnapshot = editorSnapshot(); updateWordCount();
   }
   function openEditor() { $("editorCard").scrollIntoView({behavior:"smooth",block:"start"}); $("entryTitle").focus({preventScroll:true}); }
@@ -337,7 +379,7 @@
         if (seq !== sessionSequence || ownerId !== currentUser?.id || detail !== detailSequence) return;
         if (error || !data) throw error || new Error("Yozuv topilmadi.");
         if (edit) {
-          $("entryMood").value=data.mood||"";$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;$("entryPrivate").checked=!!data.private_only;
+          moodManuallySet=!!data.mood;$("entryMood").value=data.mood||"";$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;$("entryPrivate").checked=!!data.private_only;
           $("editId").value = String(data.id); $("entryTitle").value = data.title; $("entryContent").value = data.content; $("entryDate").value = data.entry_date;
           $("editorTitle").textContent = "Yozuvni tahrirlash"; $("saveBtn").textContent = "Yangilash";
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
