@@ -249,24 +249,16 @@
   };
   let moodManuallySet=false, moodInferTimer;
   function inferMood(input) {
-    const text=(" "+String(input||"").toLocaleLowerCase().replace(/[!?.,;:()\n]/g," ")+" ").replace(/\\s+/g," ");
+    const text=(" "+String(input||"").toLocaleLowerCase().replace(/[!?.,;:()\n]/g," ")+" ").replace(/\s+/g," ");
+    if(text.trim().split(/\s+/).length<5) return null;
     const scores={great:0,good:0,okay:0,bad:0,awful:0};
-    const words=text.trim().split(/\\s+/).filter(Boolean);
-    if(words.length<5)return null;
     for(const [mood,phrases] of Object.entries(moodLexicon)){
       for(const phrase of phrases){
-        const term=phrase.toLocaleLowerCase();
-        const escaped=term.replace(/[.*+?^${}()|[\]\\]/g,"\\  function tagsFromInput() {");
-        const re=new RegExp("(^|\\\\s)"+escaped+"(?=\\\\s|$)","g");
-        const hits=[...text.matchAll(re)].length;
-        scores[mood]+=Math.min(hits,3)*(term.includes(" ")?3:2);
+        if(text.includes(" "+phrase.toLocaleLowerCase()+" ")) scores[mood]+=phrase.includes(" ")?3:2;
       }
     }
-    const winner=Object.entries(scores).sort((x,y)=>y[1]-x[1])[0];
-    if(!winner||winner[1]<2)return null;
-    const second=Object.values(scores).sort((x,y)=>y-x)[1];
-    if(winner[1]===second)return null;
-    return winner[0];
+    const ranked=Object.entries(scores).sort((x,y)=>y[1]-x[1]);
+    return ranked[0][1]>=2 && ranked[0][1]>ranked[1][1] ? ranked[0][0] : null;
   }
   function updateMoodSuggestion() {
     const predicted=inferMood($("entryTitle").value+" "+$("entryContent").value);
