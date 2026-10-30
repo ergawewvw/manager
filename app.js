@@ -34,6 +34,12 @@
     const [y,m,d] = value.split("-").map(Number);
     return new Date(y,m-1,d).toLocaleDateString("uz-UZ", {day:"numeric",month:"long",year:"numeric"});
   }
+  function postedAt(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return "Joylangan: " + date.toLocaleString("uz-UZ", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false});
+  }
   function showMessage(text, error = false) { $("message").textContent = text; $("message").style.color = error ? "var(--danger)" : "var(--accent)"; }
   function showSaveMessage(text, error = false) { $("saveMessage").textContent = text; $("saveMessage").style.color = error ? "var(--danger)" : "var(--muted)"; }
   function authError(error) {
@@ -215,7 +221,7 @@
     if (!entries.length) $("entriesList").innerHTML = stats.total
       ? '<div class="empty">Qidiruvga mos yozuv topilmadi. Qidiruv yoki oy filtrini o‘zgartiring.</div>'
       : '<div class="empty">📔<p>Hozircha yozuv yo‘q.</p><small>Birinchi kundalik yozuvingizni yarating!</small></div>';
-    else $("entriesList").innerHTML = entries.map(e => `<article class="entry"><div class="entry-head"><div><h3>${escapeHTML(e.title)}</h3><div class="entry-date">${escapeHTML(formatDate(e.entry_date))}</div></div></div><div class="entry-content">${escapeHTML(e.preview ?? e.content ?? "")}${e.truncated ? "…" : ""}</div><div class="actions"><button class="small" data-read="${escapeHTML(e.id)}">To‘liq o‘qish</button><button class="small" data-edit="${escapeHTML(e.id)}">Tahrirlash</button><button class="small delete" data-delete="${escapeHTML(e.id)}">O‘chirish</button></div></article>`).join("");
+    else $("entriesList").innerHTML = entries.map(e => `<article class="entry"><div class="entry-head"><div><h3>${escapeHTML(e.title)}</h3><div class="entry-date">${escapeHTML(formatDate(e.entry_date))} · ${escapeHTML(postedAt(e.created_at))}</div></div></div><div class="entry-content">${escapeHTML(e.preview ?? e.content ?? "")}${e.truncated ? "…" : ""}</div><div class="actions"><button class="small" data-read="${escapeHTML(e.id)}">To‘liq o‘qish</button><button class="small" data-edit="${escapeHTML(e.id)}">Tahrirlash</button><button class="small delete" data-delete="${escapeHTML(e.id)}">O‘chirish</button></div></article>`).join("");
     updateControls();
   }
   function resetForm() {
@@ -251,7 +257,7 @@
       const seq = sessionSequence, detail = ++detailSequence, ownerId = currentUser.id;
       setEditorBusy(true); showSaveMessage("Yozuv ochilmoqda...");
       try {
-        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date").eq("id",id).eq("user_id",ownerId).single();
+        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at").eq("id",id).eq("user_id",ownerId).single();
         if (seq !== sessionSequence || ownerId !== currentUser?.id || detail !== detailSequence) return;
         if (error || !data) throw error || new Error("Yozuv topilmadi.");
         if (edit) {
@@ -259,7 +265,7 @@
           $("editorTitle").textContent = "Yozuvni tahrirlash"; $("saveBtn").textContent = "Yangilash";
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
         } else {
-          $("readerTitle").textContent = data.title; $("readerDate").textContent = formatDate(data.entry_date); $("readerContent").textContent = data.content;
+          $("readerTitle").textContent = data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at); $("readerContent").textContent = data.content;
           readerComments?.dispose(); $("readerComments").replaceChildren();
           if (window.DiaryComments) readerComments = window.DiaryComments.mount($("readerComments"), {
             client,entryId:String(data.id),owner:true,
