@@ -206,7 +206,7 @@
       if (seq !== fetchSequence || ownerId !== currentUser?.id) return;
       if (error) throw error;
       if (!data || !Array.isArray(data.entries) || data.entries.length>40 || !data.stats) throw new Error("Server javobi noto‘g‘ri.");
-      entries = data.entries; stats = data.stats; hasMore = data.has_more === true;
+      entries = data.entries.sort((x,y)=>Number(!!y.pinned)-Number(!!x.pinned)); stats = data.stats; hasMore = data.has_more === true;renderInsights();
       if (!entries.length && pageHistory.length) { cursor = pageHistory.pop(); return await loadEntries(); }
       render();
     } catch (error) {
@@ -221,12 +221,70 @@
     if (!entries.length) $("entriesList").innerHTML = stats.total
       ? '<div class="empty">Qidiruvga mos yozuv topilmadi. Qidiruv yoki oy filtrini o‘zgartiring.</div>'
       : '<div class="empty">📔<p>Hozircha yozuv yo‘q.</p><small>Birinchi kundalik yozuvingizni yarating!</small></div>';
-    else $("entriesList").innerHTML = entries.map(e => `<article class="entry"><div class="entry-head"><div><h3>${escapeHTML(e.title)}</h3><div class="entry-date">${escapeHTML(formatDate(e.entry_date))} · ${escapeHTML(postedAt(e.created_at))}</div></div></div><div class="entry-content">${escapeHTML(e.preview ?? e.content ?? "")}${e.truncated ? "…" : ""}</div><div class="actions"><button class="small" data-read="${escapeHTML(e.id)}">To‘liq o‘qish</button><button class="small" data-edit="${escapeHTML(e.id)}">Tahrirlash</button><button class="small delete" data-delete="${escapeHTML(e.id)}">O‘chirish</button></div></article>`).join("");
+    else $("entriesList").innerHTML = entries.map(e => `<article class="entry"><div class="entry-head"><div><h3>${escapeHTML(e.title)}</h3><div class="entry-date">${escapeHTML(formatDate(e.entry_date))} · ${escapeHTML(postedAt(e.created_at))} · ${escapeHTML(entryExtras(e))}</div></div></div><div class="entry-content">${escapeHTML(e.preview ?? e.content ?? "")}${e.truncated ? "…" : ""}</div><div class="actions"><button class="small" data-read="${escapeHTML(e.id)}">To‘liq o‘qish</button><button class="small" data-edit="${escapeHTML(e.id)}">Tahrirlash</button><button class="small delete" data-delete="${escapeHTML(e.id)}">O‘chirish</button></div></article>`).join("");
     updateControls();
   }
+
+  let calendarMonth = new Date(), currentReadId = null;
+  const moodNames = {great:"🤩 Ajoyib",good:"🙂 Yaxshi",okay:"😐 Oddiy",bad:"😔 Yomon",awful:"😞 Juda yomon"};
+  function entryExtras(e) {
+    return (e.pinned ? "📌 " : "") + (moodNames[e.mood] ? moodNames[e.mood]+" · " : "") +
+      (Array.isArray(e.tags) ? e.tags.map(t=>"#"+t).join(" ") : "");
+  }
+  function tagsFromInput() {
+    return [...new Set($("entryTags").value.split(",").map(x=>x.trim().toLowerCase()).filter(x=>/^[a-z0-9_-]{1,24}$/.test(x)))].slice(0,10);
+  }
+  function renderInsights() {
+    if (!currentUser) return;
+    const month = calendarMonth.getFullYear()+"-"+String(calendarMonth.getMonth()+1).padStart(2,"0");
+    $("calendarHeading").textContent = calendarMonth.toLocaleDateString("uz-UZ",{year:"numeric",month:"long"});
+    client.from("diary_entries").select("entry_date,created_at,mood,tags,pinned", {count:"exact"}).eq("user_id",currentUser.id).then(({data,error})=>{
+      if(error || !currentUser) return;
+      const all=data||[], byDate={};
+      for(const e of all) byDate[e.entry_date]=(byDate[e.entry_date]||0)+1;
+      const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
+      const days=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0).getDate();
+      let markup=["Du","Se","Ch","Pa","Ju","Sh","Ya"].map(x=>"<small>"+x+"</small>").join("");
+      for(let i=0;i<(first.getDay()+6)%7;i++)markup+='<button disabled type="button"></button>';
+      for(let n=1;n<=days;n++){
+        const date=month+"-"+String(n).padStart(2,"0");
+        markup+='<button type="button" data-day="'+date+'" class="'+(byDate[date]?"has-entry":"")+'" title="'+(byDate[date]||0)+' ta post">'+n+'</button>';
+      }
+      $("calendarGrid").innerHTML=markup;
+      const totalWords=all.length; // complete text intentionally not loaded into the dashboard
+      const mo=Object.entries(all.reduce((o,e)=>(e.mood&&(o[e.mood]=(o[e.mood]||0)+1),o),{})).sort((a,b)=>b[1]-a[1])[0];
+      $("diaryStats").innerHTML='<div><strong>'+all.length+'</strong><p>Postlar</p></div><div><strong>'+Object.keys(byDate).length+'</strong><p>Yozilgan kunlar</p></div><div><strong>'+(mo?moodNames[mo[0]]:"—")+'</strong><p>Eng ko‘p kayfiyat</p></div><div><strong>'+all.filter(x=>x.pinned).length+'</strong><p>Mahkamlangan</p></div>';
+      const today=new Date(),matches=all.filter(x=>x.entry_date.slice(5)===String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0")&&x.entry_date.slice(0,4)!==String(today.getFullYear()));
+      $("onThisDay").textContent=matches.length?"📖 O‘tgan yillarning shu kunida: "+matches.length+" ta post":"";
+    });
+  }
+  $("calendarPrev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);renderInsights();});
+  $("calendarNext").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);renderInsights();});
+  $("calendarGrid").addEventListener("click",e=>{const date=e.target.closest("[data-day]")?.dataset.day;if(date){$("monthFilter").value=date.slice(0,7);$("searchInput").value="";loadEntries({reset:true});}});
+  document.querySelectorAll("[data-mark]").forEach(btn=>btn.addEventListener("click",()=>{
+    const field=$("entryContent"), start=field.selectionStart,end=field.selectionEnd,selected=field.value.slice(start,end)||"matn";
+    const key=btn.dataset.mark, replacement=key==="bold"?"**"+selected+"**":key==="italic"?"*"+selected+"*":key==="heading"?"## "+selected:"- "+selected;
+    field.setRangeText(replacement,start,end,"select");field.focus();field.dispatchEvent(new Event("input",{bubbles:true}));
+  }));
+  $("printDiaryBtn").addEventListener("click",()=>window.print());
+  $("historyBtn").addEventListener("click",async()=>{
+    if(!currentReadId||!currentUser)return;
+    const {data,error}=await client.from("diary_versions").select("id,title,content,entry_date,saved_at").eq("entry_id",currentReadId).eq("user_id",currentUser.id).order("saved_at",{ascending:false}).limit(30);
+    const panel=$("historyPanel");panel.replaceChildren();panel.classList.remove("hidden");
+    if(error){panel.textContent="Tarix yuklanmadi: "+authError(error);return;}
+    if(!data.length){panel.textContent="Oldingi versiya mavjud emas.";return;}
+    for(const version of data){
+      const details=document.createElement("details"),summary=document.createElement("summary"),body=document.createElement("pre");
+      summary.textContent=new Date(version.saved_at).toLocaleString("uz-UZ")+" — "+version.title;
+      body.textContent=version.content;body.style.whiteSpace="pre-wrap";body.style.overflowWrap="anywhere";
+      details.append(summary,body);panel.append(details);
+    }
+  });
+
   function resetForm() {
     $("entryForm").reset(); $("editId").value = ""; $("entryDate").value = localDate();
     $("editorTitle").textContent = "Yangi yozuv"; $("saveBtn").textContent = "Saqlash";
+    $("entryMood").value="";$("entryTags").value="";$("entryPinned").checked=false;
     showSaveMessage(""); formSnapshot = editorSnapshot(); updateWordCount();
   }
   function openEditor() { $("editorCard").scrollIntoView({behavior:"smooth",block:"start"}); $("entryTitle").focus({preventScroll:true}); }
@@ -235,15 +293,16 @@
     const title = $("entryTitle").value.trim(), content = $("entryContent").value.trim(), entry_date = $("entryDate").value, id = $("editId").value;
     if (!title || !content || !entry_date || title.length>120 || content.length>20000) { showSaveMessage("Maydonlarni to‘g‘ri to‘ldiring.",true); return; }
     const ownerId = currentUser.id, seq = sessionSequence;
+    const metadata={mood:$("entryMood").value||null,tags:tagsFromInput(),pinned:$("entryPinned").checked};
     setEditorBusy(true); showSaveMessage("Saqlanmoqda...");
     try {
       let result;
-      if (id) result = await client.from("diary_entries").update({title,content,entry_date,updated_at:new Date().toISOString()}).eq("id",id).eq("user_id",ownerId).select("id");
-      else result = await client.from("diary_entries").insert({title,content,entry_date,user_id:ownerId}).select("id");
+      if (id) result = await client.from("diary_entries").update({title,content,entry_date,...metadata,updated_at:new Date().toISOString()}).eq("id",id).eq("user_id",ownerId).select("id");
+      else result = await client.from("diary_entries").insert({title,content,entry_date,...metadata,user_id:ownerId}).select("id");
       if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
       if (result.error) throw result.error;
       if (!result.data?.length) throw new Error("Yozuv o‘zgarmadi. Qayta urinib ko‘ring.");
-      resetForm(); await loadEntries({reset:true});
+      resetForm(); await loadEntries({reset:true});renderInsights();
       if (seq === sessionSequence && ownerId === currentUser?.id) showSaveMessage("Yozuv saqlandi ✓");
     } catch (error) { if (seq === sessionSequence && ownerId === currentUser?.id) showSaveMessage(authError(error),true); }
     finally { setEditorBusy(false,seq); }
@@ -257,15 +316,16 @@
       const seq = sessionSequence, detail = ++detailSequence, ownerId = currentUser.id;
       setEditorBusy(true); showSaveMessage("Yozuv ochilmoqda...");
       try {
-        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at").eq("id",id).eq("user_id",ownerId).single();
+        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at,mood,tags,pinned").eq("id",id).eq("user_id",ownerId).single();
         if (seq !== sessionSequence || ownerId !== currentUser?.id || detail !== detailSequence) return;
         if (error || !data) throw error || new Error("Yozuv topilmadi.");
         if (edit) {
+          $("entryMood").value=data.mood||"";$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;
           $("editId").value = String(data.id); $("entryTitle").value = data.title; $("entryContent").value = data.content; $("entryDate").value = data.entry_date;
           $("editorTitle").textContent = "Yozuvni tahrirlash"; $("saveBtn").textContent = "Yangilash";
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
         } else {
-          $("readerTitle").textContent = data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at); $("readerContent").textContent = data.content;
+          currentReadId=String(data.id);$("historyPanel").classList.add("hidden"); $("readerTitle").textContent = (data.pinned?"📌 ":"")+data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at) + " · " + entryExtras(data); $("readerContent").textContent = data.content;
           readerComments?.dispose(); $("readerComments").replaceChildren();
           if (window.DiaryComments) readerComments = window.DiaryComments.mount($("readerComments"), {
             client,entryId:String(data.id),owner:true,
