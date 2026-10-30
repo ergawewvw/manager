@@ -222,7 +222,7 @@
           <label for="entryDate">Sana</label>
           <input id="entryDate" type="date" required>
           <section class="diary-extensions" aria-label="Post sozlamalari">
-<label for="entryMood">Kayfiyat</label><select id="entryMood"><option value="">Tanlanmagan</option><option value="great">🤩 Ajoyib</option><option value="good">🙂 Yaxshi</option><option value="okay">😐 Oddiy</option><option value="bad">😔 Yomon</option><option value="awful">😞 Juda yomon</option></select>
+<label for="entryMood">Kayfiyat</label><select id="entryMood"><option value="">Tanlanmagan</option><option value="great">🤩 Ajoyib</option><option value="good">🙂 Yaxshi</option><option value="okay">😐 Oddiy</option><option value="bad">😔 Yomon</option><option value="awful">😞 Juda yomon</option></select><p id="moodSuggestion" class="hint" aria-live="polite">Matn yozsangiz, kayfiyat avtomatik tavsiya qilinadi. Bu taxminiy tahlil; istasangiz o‘zgartiring.</p>
 <label for="entryTags">Teglar (vergul bilan ajrating)</label><input id="entryTags" maxlength="240" placeholder="school, ideas, life">
 <label><input id="entryPrivate" type="checkbox" style="width:auto"> 🔒 Faqat men (mehmonlar ko‘rmaydi)</label><label><input id="entryPinned" type="checkbox" style="width:auto"> 📌 Yuqoriga mahkamlash</label>
 </section><label for="entryPhoto">Surat biriktirish (JPG, PNG, WebP · 5 MB gacha)</label><input id="entryPhoto" type="file" accept="image/jpeg,image/png,image/webp"><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
@@ -250,6 +250,6 @@
   </main>
 </div>
 
-<script src="./app.js?v=20261030-photos" defer></script>
+<script src="./app.js?v=20261030-mood-infer" defer></script>
 </body>
 </html>
