@@ -96,7 +96,22 @@
       .top { align-items:flex-start }
       .card { padding:16px }
     }
-  </style>
+  
+    .diary-extensions {display:grid;gap:12px;margin:12px 0}
+    .diary-extensions input,.diary-extensions select {width:100%}
+    .diary-extras {display:flex;gap:8px;flex-wrap:wrap;margin:9px 0}
+    .diary-extras button {cursor:pointer}
+    .diary-chip {display:inline-block;padding:3px 9px;border:1px solid var(--border);border-radius:16px;font-size:12px;margin:3px}
+    .diary-calendar {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+    .diary-calendar button {color:var(--text);background:var(--soft);border:1px solid var(--border);padding:8px 3px;border-radius:6px;cursor:pointer}
+    .diary-calendar button.has-entry {border-color:var(--accent);font-weight:700}
+    .diary-calendar button:disabled {opacity:.25;cursor:default}
+    .diary-summary {display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+    .diary-summary>div {padding:12px;border:1px solid var(--border);border-radius:10px}
+    .diary-toolbar {display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+    .diary-toolbar button {padding:6px 10px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--soft);color:var(--text)}
+    @media print {body * {visibility:hidden!important} #readerCard,#readerCard * {visibility:visible!important} #readerCard {position:absolute;top:0;left:0;width:100%;background:white!important;color:black!important;box-shadow:none!important} #readerCard button,#readerComments {display:none!important}}
+</style>
 <link rel="stylesheet" href="./design.css?v=20261020c">
 <link rel="stylesheet" href="./privacy.css?v=20261020d">
 <link rel="stylesheet" href="./comments.css?v=20261021b">
@@ -195,7 +210,7 @@
       <div class="card"><div class="stat-label">Shu oy</div><div class="stat-number" id="monthStat">0</div></div>
     </section>
 
-    <section id="readerCard" class="card hidden" style="margin-bottom:18px"><h2 id="readerTitle"></h2><p id="readerDate" class="muted"></p><p id="readerContent" class="entry-content"></p><div id="readerComments"></div><button id="closeReaderBtn" class="btn" type="button">Yopish</button></section>
+    <section class="card" id="diaryInsights" style="margin-bottom:18px"><h2>📅 Kundalik kalendari</h2><div class="diary-extras"><button type="button" id="calendarPrev" class="btn">←</button><strong id="calendarHeading"></strong><button type="button" id="calendarNext" class="btn">→</button></div><div id="calendarGrid" class="diary-calendar"></div><h3>📊 Yozuv statistikasi</h3><div class="diary-summary" id="diaryStats"></div><div id="onThisDay"></div></section><section id="readerCard" class="card hidden" style="margin-bottom:18px"><h2 id="readerTitle"></h2><p id="readerDate" class="muted"></p><p id="readerContent" class="entry-content"></p><div class="diary-extras"><button id="printDiaryBtn" class="btn" type="button">PDF / Chop etish</button><button id="historyBtn" class="btn" type="button">Versiyalar tarixi</button></div><div id="historyPanel" class="hidden"></div><div id="readerComments"></div><button id="closeReaderBtn" class="btn" type="button">Yopish</button></section>
     <div class="workspace">
       <section class="card" id="editorCard">
         <h2 class="section" id="editorTitle">Yangi yozuv</h2>
@@ -206,7 +221,11 @@
           <input id="entryTitle" maxlength="120" placeholder="Bugungi kunim..." required>
           <label for="entryDate">Sana</label>
           <input id="entryDate" type="date" required>
-          <label for="entryContent">Kundalik</label>
+          <section class="diary-extensions" aria-label="Post sozlamalari">
+<label for="entryMood">Kayfiyat</label><select id="entryMood"><option value="">Tanlanmagan</option><option value="great">🤩 Ajoyib</option><option value="good">🙂 Yaxshi</option><option value="okay">😐 Oddiy</option><option value="bad">😔 Yomon</option><option value="awful">😞 Juda yomon</option></select>
+<label for="entryTags">Teglar (vergul bilan ajrating)</label><input id="entryTags" maxlength="240" placeholder="school, ideas, life">
+<label><input id="entryPinned" type="checkbox" style="width:auto"> 📌 Yuqoriga mahkamlash</label>
+</section><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
           <textarea id="entryContent" maxlength="20000" placeholder="Bugun nimalar bo‘ldi?..." required></textarea>
           <div class="actions">
             <button class="btn primary" id="saveBtn" type="submit">Saqlash</button>
@@ -231,6 +250,6 @@
   </main>
 </div>
 
-<script src="./app.js?v=20261030-post-time" defer></script>
+<script src="./app.js?v=20261030-extensions" defer></script>
 </body>
 </html>
