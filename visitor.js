@@ -21,6 +21,12 @@
     $("guestNextBtn").disabled = loading || !reading || !hasMore;
     $("guestPageLabel").textContent = reading ? `${Math.floor(offset / 40) + 1}-sahifa` : "";
   }
+  function diaryMarkup(value) {
+    const escape = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    return escape(value||"").replace(/^## (.+)$/gm,"<strong>$1</strong>")
+      .replace(/\\*\\*([^\\n*]+)\\*\\*/g,"<strong>$1</strong>")
+      .replace(/\\*([^\\n*]+)\\*/g,"<em>$1</em>").replace(/^- (.+)$/gm,"• $1");
+  }
   function renderNotes(entries) {
     clearCommentWidgets();
     $("notes").replaceChildren();
@@ -33,7 +39,7 @@
       const publishedLabel = published && !Number.isNaN(published.getTime())
         ? published.toLocaleString("uz-UZ", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}) : "";
       date.textContent = item.entry_date + (publishedLabel ? " · Joylangan: " + publishedLabel : "");
-      const body = document.createElement("p"); body.textContent = item.content;
+      const body = document.createElement("p"); body.innerHTML = diaryMarkup(item.content);
       article.append(heading,date,body); $("notes").append(article);
       if (window.DiaryComments && /^\d+$/.test(String(item.id))) {
         const comments = document.createElement("div"); article.append(comments);
