@@ -210,7 +210,7 @@
       <div class="card"><div class="stat-label">Shu oy</div><div class="stat-number" id="monthStat">0</div></div>
     </section>
 
-    <section class="card" id="diaryInsights" style="margin-bottom:18px"><h2>📅 Kundalik kalendari</h2><div class="diary-extras"><button type="button" id="calendarPrev" class="btn">←</button><strong id="calendarHeading"></strong><button type="button" id="calendarNext" class="btn">→</button></div><div id="calendarGrid" class="diary-calendar"></div><h3>📊 Yozuv statistikasi</h3><div class="diary-summary" id="diaryStats"></div><div id="onThisDay"></div></section><section id="readerCard" class="card hidden" style="margin-bottom:18px"><h2 id="readerTitle"></h2><p id="readerDate" class="muted"></p><p id="readerContent" class="entry-content"></p><div class="diary-extras"><button id="printDiaryBtn" class="btn" type="button">PDF / Chop etish</button><button id="historyBtn" class="btn" type="button">Versiyalar tarixi</button></div><div id="historyPanel" class="hidden"></div><div id="readerComments"></div><button id="closeReaderBtn" class="btn" type="button">Yopish</button></section>
+    <section class="card" id="diaryInsights" style="margin-bottom:18px"><h2>📅 Kundalik kalendari</h2><div class="diary-extras"><button type="button" id="calendarPrev" class="btn">←</button><strong id="calendarHeading"></strong><button type="button" id="calendarNext" class="btn">→</button></div><div id="calendarGrid" class="diary-calendar"></div><h3>📊 Yozuv statistikasi</h3><div class="diary-summary" id="diaryStats"></div><div id="onThisDay"></div></section><section id="readerCard" class="card hidden" style="margin-bottom:18px"><h2 id="readerTitle"></h2><p id="readerDate" class="muted"></p><p id="readerContent" class="entry-content"></p><div id="readerPhoto"></div><div class="diary-extras"><button id="printDiaryBtn" class="btn" type="button">PDF / Chop etish</button><button id="historyBtn" class="btn" type="button">Versiyalar tarixi</button></div><div id="historyPanel" class="hidden"></div><div id="readerComments"></div><button id="closeReaderBtn" class="btn" type="button">Yopish</button></section>
     <div class="workspace">
       <section class="card" id="editorCard">
         <h2 class="section" id="editorTitle">Yangi yozuv</h2>
@@ -225,7 +225,7 @@
 <label for="entryMood">Kayfiyat</label><select id="entryMood"><option value="">Tanlanmagan</option><option value="great">🤩 Ajoyib</option><option value="good">🙂 Yaxshi</option><option value="okay">😐 Oddiy</option><option value="bad">😔 Yomon</option><option value="awful">😞 Juda yomon</option></select>
 <label for="entryTags">Teglar (vergul bilan ajrating)</label><input id="entryTags" maxlength="240" placeholder="school, ideas, life">
 <label><input id="entryPrivate" type="checkbox" style="width:auto"> 🔒 Faqat men (mehmonlar ko‘rmaydi)</label><label><input id="entryPinned" type="checkbox" style="width:auto"> 📌 Yuqoriga mahkamlash</label>
-</section><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
+</section><label for="entryPhoto">Surat biriktirish (JPG, PNG, WebP · 5 MB gacha)</label><input id="entryPhoto" type="file" accept="image/jpeg,image/png,image/webp"><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
           <textarea id="entryContent" maxlength="20000" placeholder="Bugun nimalar bo‘ldi?..." required></textarea>
           <div class="actions">
             <button class="btn primary" id="saveBtn" type="submit">Saqlash</button>
@@ -250,6 +250,6 @@
   </main>
 </div>
 
-<script src="./app.js?v=20261030-extensions" defer></script>
+<script src="./app.js?v=20261030-photos" defer></script>
 </body>
 </html>
