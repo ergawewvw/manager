@@ -440,6 +440,7 @@
   $("retryBtn").addEventListener("click", () => { if (currentUser && !busy) return loadEntries(); });
   $("closeReaderBtn").addEventListener("click",closeReader);
   $("entryForm").addEventListener("input",updateWordCount);
+  window.addEventListener("daily-diary:sync-complete",()=>{if(currentUser&&!busy)void loadEntries({reset:true});});
   window.addEventListener("beforeunload", event => { if ((currentUser && hasDraft()) || backupBusy) { event.preventDefault(); event.returnValue = ""; } });
   document.addEventListener("keydown", event => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s" && currentUser) { event.preventDefault(); if (!busy) $("entryForm").requestSubmit(); } });
   function startBackup() { backupBusy = true; setEditorBusy(true); $("backupMessage").textContent = ""; return {seq:++backupSequence,owner:currentUser.id,session:sessionSequence}; }

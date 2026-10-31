@@ -2,7 +2,7 @@
 (() => {
   let opening;
   function db() {
-    if(!indexedDB) return Promise.reject(new Error("IndexedDB mavjud emas"));
+    if(typeof indexedDB==="undefined") return Promise.reject(new Error("IndexedDB mavjud emas"));
     if(!opening) opening=new Promise((resolve,reject)=>{
       const req=indexedDB.open("daily-diary-drafts-v1",1);
       req.onupgradeneeded=()=>req.result.createObjectStore("notes",{keyPath:"key"});

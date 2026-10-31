@@ -143,7 +143,14 @@
     async function prepare(content,id,fileMap=images){
       let updated=content;
       const used=[...fileMap].filter(([imageId])=>content.includes("[[img|"+imageId+"|"));
-      if(used.length>8)throw new Error("8 tadan ortiq rasm yuklab bo‘lmaydi.");
+      const count=[...content.matchAll(/\[\[(?:img|photo)\|[^\]]+\]\]/g)].length;
+      if(count>8)throw new Error("Bitta postda ko‘pi bilan 8 ta rasm bo‘lishi mumkin.");
+      let projected=content;
+      for(const [imageId,file] of used){
+        const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
+        projected=projected.replace(new RegExp("\\[\\[img\\|"+imageId+"\\|(25|50|75|100)\\]\\]","g"),(_,w)=>"[[photo|"+id+"/inline/"+imageId+"."+ext+"|"+w+"]]");
+      }
+      if(projected.length>20000)throw new Error("Rasmlar bilan matn 20000 belgidan oshib ketdi.");
       for(const [imageId,file] of used){
         if(!localId(imageId)||!allowed(file))throw new Error("Rasm noto‘g‘ri.");
         const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
@@ -162,6 +169,7 @@
       const item={owner:id,key:"queue:"+id+":"+crypto.randomUUID(),title:data.title,content:data.content,date:data.date,
         images:[...images].map(([key,file])=>({id:key,file})),tags:data.tags,pinned:data.pinned,
         private_only:data.private_only,kind:"queue",savedAt:Date.now()};
+      clearTimeout(timer);
       await drafts.put(item);
       await drafts.remove("editing:"+id);
     }
@@ -171,6 +179,7 @@
       syncing=true;
       try{
         const list=await drafts.list(id);
+        let completed=0;
         for(const item of list){
           if(own()!==id||!navigator.onLine)break;
           if(!item.title||!item.content||!item.date)continue;
@@ -186,9 +195,13 @@
           }
           if(own()!==id)return;
           await drafts.remove(item.key);
+          completed++;
           status.textContent="✓ Offline yozuvlar sinxronlandi.";
         }
-        if(list.length&&own()===id)window.location.reload();
+        if(completed&&own()===id){
+          if(typeof window.dispatchEvent==="function")window.dispatchEvent(new Event("daily-diary:sync-complete"));
+          else window.location?.reload?.();
+        }
       }catch(e){if(own()===id)status.textContent="Sinxronlash kutilmoqda: "+e.message;}
       finally{syncing=false;}
     }
@@ -200,12 +213,13 @@
       void syncQueue();
     }
     async function saved(){
+      clearTimeout(timer);
       const id=own();if(drafts&&id)await drafts.remove("editing:"+id).catch(()=>{});
     }
     function edited(){renderPreview();}
     function renderReader(content,target,id){pieces(target,content,id,false);}
     function beforeClear(){clearTimeout(timer);if(own())void persist();}
-    function discard(){const id=own();if(drafts&&id)void drafts.remove("editing:"+id);}
+    function discard(){clearTimeout(timer);const id=own();if(drafts&&id)void drafts.remove("editing:"+id);}
     window.addEventListener("online",()=>void syncQueue());
     if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
     return {signature,reset,persist,prepare,queueOffline,renderReader,edited,login,saved,beforeClear,discard};
