@@ -63,6 +63,19 @@ test("clipboard image inserts a marker at the cursor, and upload makes a private
   assert.match(result,new RegExp("\\[\\[photo\\|"+p.owner+"/inline/"));
   assert.doesNotMatch(result,/\[\[img\|/);
 });
+test("preview arrow swaps the order of two inline images",()=>{
+  const p=harness();
+  p.$("entryPhoto").files=[new Blob(["a"],{type:"image/png"}),new Blob(["b"],{type:"image/png"})];
+  p.$("entryPhoto").dispatchEvent(new Event("change"));
+  const before=[...p.$("entryContent").value.matchAll(/\[\[img\|([0-9a-f-]+)\|75\]\]/g)].map(x=>x[1]);
+  assert.equal(before.length,2);
+  function walk(node){return [node,...(node.children||[]).flatMap(walk)]}
+  const down=walk(p.$("inlinePreview")).find(x=>x.textContent==="↓");
+  assert.ok(down);
+  down.dispatchEvent(new Event("click"));
+  const after=[...p.$("entryContent").value.matchAll(/\[\[img\|([0-9a-f-]+)\|75\]\]/g)].map(x=>x[1]);
+  assert.deepEqual(after,[before[1],before[0]]);
+});
 test("autosaved draft is stored locally and removed after successful save",async()=>{
   const p=harness();
   p.$("entryTitle").value="Local draft";p.$("entryContent").value="Not sent yet";p.$("entryDate").value="2026-10-31";

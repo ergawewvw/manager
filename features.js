@@ -87,6 +87,17 @@
               emitChange();
             });controls.append(b);
           }
+          for(const [symbol,step] of [["↑",-1],["↓",1]]){
+            const b=document.createElement("button");b.type="button";b.className="btn";b.textContent=symbol;b.title=step<0?"Rasmni oldingi joyga":"Rasmni keyingi joyga";
+            b.addEventListener("click",()=>{
+              const content=entry.value,all=[...content.matchAll(token)],i=all.findIndex(m=>m[0]===found[0]);
+              const other=all[i+step];
+              if(i<0||!other)return;
+              const first=i<i+step?all[i]:other,second=i<i+step?other:all[i];
+              entry.value=content.slice(0,first.index)+second[0]+content.slice(first.index+first[0].length,second.index)+first[0]+content.slice(second.index+second[0].length);
+              emitChange();
+            });controls.append(b);
+          }
           const remove=document.createElement("button");remove.className="btn";remove.type="button";remove.textContent="Olib tashlash";
           remove.addEventListener("click",()=>{entry.value=entry.value.replace(found[0],"");emitChange();});
           controls.append(remove);wrap.append(controls);
