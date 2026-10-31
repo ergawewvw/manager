@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="theme-color" content="#0b1020"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./assets/favicon.png"><title>Daily Diary — Offline</title>
+<style>body{font-family:system-ui,sans-serif;background:#0b1020;color:#eef2ff;margin:0;padding:24px}main{max-width:740px;margin:auto}section{background:#141b30;border:1px solid #313a56;padding:20px;border-radius:16px;margin:18px 0}a{color:#b3aaff}label{display:block;margin:14px 0 6px}input,textarea{box-sizing:border-box;width:100%;color:#fff;background:#0b1020;border:1px solid #45516b;border-radius:9px;padding:10px;font:inherit}textarea{min-height:220px;resize:vertical}button{background:#7968ed;color:white;border:0;border-radius:9px;padding:10px 14px;font:inherit;cursor:pointer}button:disabled{opacity:.5}.hint{color:#b2bad0;line-height:1.7}#preview img{width:75%;max-width:100%;display:block;margin:10px 0;border-radius:10px}</style>
+</head><body><main>
+<p><a href="./index.html">← Daily Diary</a></p><h1>📔 Offline kundalik</h1>
+<p class="hint">Internet bo‘lmaganida ham yozing. Qoralama va suratlar ushbu qurilma xotirasida saqlanadi, internetga qaytib hisobingizga kirganingizda yuboriladi. Umumiy qurilmada maxfiy qoralama qoldirmang.</p>
+<section><form id="offlineForm">
+<label for="title">Sarlavha</label><input id="title" maxlength="120" required>
+<label for="date">Sana</label><input id="date" type="date" required>
+<label for="content">Matn</label><textarea id="content" maxlength="20000" required></textarea>
+<label for="photos">Rasm tanlash (Ctrl+V ham mumkin)</label><input id="photos" type="file" multiple accept="image/jpeg,image/png,image/webp">
+<div id="preview"></div><p id="draftStatus" class="hint" role="status"></p>
+<button type="submit">Sinxronlash navbatiga qo‘shish</button>
+</form></section>
+<section><h2>Navbatdagi yozuvlar</h2><div id="queue"></div></section><p id="status" role="status"></p>
+</main><script src="./drafts.js" defer></script><script src="./offline.js" defer></script></body></html>
