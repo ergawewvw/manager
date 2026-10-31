@@ -22,6 +22,7 @@
   let stats = { total:0, today:0, month:0 }, backupBusy = false, recoveryMode = false;
   let authBusy = false, emailCooldownUntil = 0;
   let readerComments = null;
+  let pendingPhoto = null, pendingPhotoUrl = null;
   const redirectUrl = () => new URL("./index.html", window.location.href).href;
   function localDate() {
     const d = new Date();
@@ -59,7 +60,7 @@
     };
     return messages[error?.code] || (error?.name === "TimeoutError" ? "So‘rov vaqti tugadi. Internetni tekshirib, qayta urinib ko‘ring." : error?.message || "Ulanishda xatolik. Qayta urinib ko‘ring.");
   }
-  function editorSnapshot() { return JSON.stringify([$("editId").value,$("entryTitle").value,$("entryDate").value,$("entryContent").value]); }
+  function editorSnapshot() { return JSON.stringify([$("editId").value,$("entryTitle").value,$("entryDate").value,$("entryContent").value,pendingPhoto ? [pendingPhoto.name,pendingPhoto.size,pendingPhoto.type,pendingPhoto.lastModified] : null]); }
   function hasDraft() { return formSnapshot !== editorSnapshot(); }
   function mayDiscard() { return !hasDraft() || confirm("Saqlanmagan o‘zgarishlar bor. Ularni bekor qilasizmi?"); }
   function updateWordCount() {
@@ -69,7 +70,7 @@
   function setEditorBusy(value, seq = sessionSequence) {
     if (seq !== sessionSequence) return;
     busy = value;
-    for (const id of ["saveBtn","newBtn","cancelBtn","entryTitle","entryDate","entryContent"]) $(id).disabled = value;
+    for (const id of ["saveBtn","newBtn","cancelBtn","entryTitle","entryDate","entryContent","entryPhoto","removePhotoBtn"]) $(id).disabled = value;
     updateControls();
   }
   function updateControls() {
@@ -233,44 +234,10 @@
   }
 
   let calendarMonth = new Date(), currentReadId = null;
-  const moodNames = {great:"🤩 Ajoyib",good:"🙂 Yaxshi",okay:"😐 Oddiy",bad:"😔 Yomon",awful:"😞 Juda yomon"};
   function entryExtras(e) {
-    return (e.private_only ? "🔒 " : "") + (e.pinned ? "📌 " : "") + (moodNames[e.mood] ? moodNames[e.mood]+" · " : "") +
+    return (e.private_only ? "🔒 " : "") + (e.pinned ? "📌 " : "") +
       (Array.isArray(e.tags) ? e.tags.map(t=>"#"+t).join(" ") : "");
   }
-
-  // Lightweight, private on-device keyword heuristic. No post text is sent to a new service.
-  const moodLexicon = {
-    great:["juda xursand","nihoyatda xursand","ajoyib","zo'r","zo‘r","muvaffaqiyat","g'alaba","g‘alaba","yutdim","erishdim","fantastic","amazing","excellent","thrilled","won","achievement","best day","happy birthday"],
-    good:["xursand","quvonch","yaxshi","yoqdi","mamnun","shukur","rahmat","kuldi","yoqimli","mazza","nice","happy","glad","grateful","enjoyed","fun","good day","great"],
-    okay:["oddiy","odatdagidek","tinch","normal","o'rtacha","o‘rtacha","unchalik emas","not bad","fine","okay","alright","usual","ordinary","average"],
-    bad:["xafa","zerikdim","charchadim","qiyin","yomon","xafaman","tushkun","bezovta","xavotir","stress","sad","tired","upset","worried","hard","difficult","disappointed","bad day"],
-    awful:["juda yomon","juda xafa","dahshat","qo'rqinchli","qo‘rqinchli","umidsiz","qattiq yig'ladim","qattiq yig‘ladim","terrible","horrible","devastated","miserable","worst day","heartbroken"]
-  };
-  let moodManuallySet=false, moodInferTimer;
-  function inferMood(input) {
-    const text=(" "+String(input||"").toLocaleLowerCase().replace(/[!?.,;:()\n]/g," ")+" ").replace(/\s+/g," ");
-    if(text.trim().split(/\s+/).length<5) return null;
-    const scores={great:0,good:0,okay:0,bad:0,awful:0};
-    for(const [mood,phrases] of Object.entries(moodLexicon)){
-      for(const phrase of phrases){
-        if(text.includes(" "+phrase.toLocaleLowerCase()+" ")) scores[mood]+=phrase.includes(" ")?3:2;
-      }
-    }
-    const ranked=Object.entries(scores).sort((x,y)=>y[1]-x[1]);
-    return ranked[0][1]>=2 && ranked[0][1]>ranked[1][1] ? ranked[0][0] : null;
-  }
-  function updateMoodSuggestion() {
-    const predicted=inferMood($("entryTitle").value+" "+$("entryContent").value);
-    const label=$("moodSuggestion");
-    if(!predicted) {label.textContent="Kayfiyatni aniq taxmin qilib bo‘lmadi. Uni qo‘lda belgilashingiz mumkin.";return;}
-    label.textContent="Matnga ko‘ra tavsiya: "+moodNames[predicted]+" (taxminiy). "+(moodManuallySet?"Siz tanlagan kayfiyat saqlanadi.":"Avtomatik tanlandi; o‘zgartirishingiz mumkin.");
-    if(!moodManuallySet) $("entryMood").value=predicted;
-  }
-  $("entryMood").addEventListener("change",()=>{moodManuallySet=true;updateMoodSuggestion();});
-  ["entryTitle","entryContent"].forEach(id=>$(id).addEventListener("input",()=>{
-    clearTimeout(moodInferTimer); moodInferTimer=setTimeout(updateMoodSuggestion,350);
-  }));
 
   function tagsFromInput() {
     return [...new Set($("entryTags").value.split(",").map(x=>x.trim().toLowerCase()).filter(x=>/^[a-z0-9_-]{1,24}$/.test(x)))].slice(0,10);
@@ -279,7 +246,7 @@
     if (!currentUser) return;
     const month = calendarMonth.getFullYear()+"-"+String(calendarMonth.getMonth()+1).padStart(2,"0");
     $("calendarHeading").textContent = calendarMonth.toLocaleDateString("uz-UZ",{year:"numeric",month:"long"});
-    client.from("diary_entries").select("entry_date,created_at,mood,tags,pinned", {count:"exact"}).eq("user_id",currentUser.id).then(({data,error})=>{
+    client.from("diary_entries").select("entry_date,created_at,tags,pinned", {count:"exact"}).eq("user_id",currentUser.id).then(({data,error})=>{
       if(error || !currentUser) return;
       const all=data||[], byDate={};
       for(const e of all) byDate[e.entry_date]=(byDate[e.entry_date]||0)+1;
@@ -292,8 +259,7 @@
         markup+='<button type="button" data-day="'+date+'" class="'+(byDate[date]?"has-entry":"")+'" title="'+(byDate[date]||0)+' ta post">'+n+'</button>';
       }
       $("calendarGrid").innerHTML=markup;
-            const mo=Object.entries(all.reduce((o,e)=>(e.mood&&(o[e.mood]=(o[e.mood]||0)+1),o),{})).sort((a,b)=>b[1]-a[1])[0];
-      $("diaryStats").innerHTML='<div><strong>'+all.length+'</strong><p>Postlar</p></div><div><strong>'+Object.keys(byDate).length+'</strong><p>Yozilgan kunlar</p></div><div><strong>'+(mo?moodNames[mo[0]]:"—")+'</strong><p>Eng ko‘p kayfiyat</p></div><div><strong>'+all.filter(x=>x.pinned).length+'</strong><p>Mahkamlangan</p></div>';
+      $("diaryStats").innerHTML='<div><strong>'+all.length+'</strong><p>Postlar</p></div><div><strong>'+Object.keys(byDate).length+'</strong><p>Yozilgan kunlar</p></div><div><strong>'+all.filter(x=>x.pinned).length+'</strong><p>Mahkamlangan</p></div>';
       const today=new Date(),matches=all.filter(x=>x.entry_date.slice(5)===String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0")&&x.entry_date.slice(0,4)!==String(today.getFullYear()));
       $("onThisDay").textContent=matches.length?"📖 O‘tgan yillarning shu kunida: "+matches.length+" ta post":"";
     });
@@ -321,10 +287,53 @@
     }
   });
 
+  // Keep a pasted image in this draft; only upload when the post is saved.
+  function clearPendingPhoto() {
+    pendingPhoto = null;
+    if (pendingPhotoUrl) URL.revokeObjectURL(pendingPhotoUrl);
+    pendingPhotoUrl = null;
+    $("entryPhoto").value = "";
+    $("photoPreviewImage").src = "";
+    $("photoPreviewName").textContent = "";
+    $("photoPreview").classList.add("hidden");
+  }
+  function setPendingPhoto(file, fromClipboard = false) {
+    if (!file) return;
+    if (!["image/jpeg","image/png","image/webp"].includes(file.type) || file.size > 5242880 || file.size === 0) {
+      showSaveMessage("Rasm JPG, PNG yoki WebP formatida va 5 MB dan kichik bo‘lishi kerak.",true);
+      $("entryPhoto").value = "";
+      return;
+    }
+    if (pendingPhotoUrl) URL.revokeObjectURL(pendingPhotoUrl);
+    pendingPhoto = file;
+    pendingPhotoUrl = URL.createObjectURL(file);
+    if (fromClipboard) $("entryPhoto").value = "";
+    $("photoPreviewImage").src = pendingPhotoUrl;
+    $("photoPreviewName").textContent = (file.name || "Clipboard rasmi") + " · " + (file.size / 1024 / 1024).toFixed(2) + " MB";
+    $("photoPreview").classList.remove("hidden");
+    showSaveMessage("Rasm biriktirildi. Postni saqlaganda yuklanadi.");
+  }
+  $("entryPhoto").addEventListener("change", () => {
+    if (busy || !currentUser) return;
+    setPendingPhoto($("entryPhoto").files?.[0]);
+  });
+  $("entryContent").addEventListener("paste", event => {
+    if (busy || !currentUser) return;
+    const imageItem = Array.from(event.clipboardData?.items || []).find(item => item.kind === "file" && item.type.startsWith("image/"));
+    if (!imageItem) return; // Ordinary text paste keeps its default behavior.
+    event.preventDefault();
+    setPendingPhoto(imageItem.getAsFile(), true);
+  });
+  $("removePhotoBtn").addEventListener("click", () => {
+    if (busy) return;
+    clearPendingPhoto();
+    showSaveMessage("Biriktirilgan rasm olib tashlandi.");
+  });
+
   function resetForm() {
-    $("entryForm").reset(); $("editId").value = ""; $("entryDate").value = localDate();
+    $("entryForm").reset(); clearPendingPhoto(); $("editId").value = ""; $("entryDate").value = localDate();
     $("editorTitle").textContent = "Yangi yozuv"; $("saveBtn").textContent = "Saqlash";
-    moodManuallySet=false;$("moodSuggestion").textContent="Matn yozsangiz, kayfiyat avtomatik tavsiya qilinadi. Bu taxminiy tahlil; istasangiz o‘zgartiring.";$("entryMood").value="";$("entryTags").value="";$("entryPinned").checked=false;$("entryPrivate").checked=false;
+    $("entryTags").value="";$("entryPinned").checked=false;$("entryPrivate").checked=false;
     showSaveMessage(""); formSnapshot = editorSnapshot(); updateWordCount();
   }
   function openEditor() { $("editorCard").scrollIntoView({behavior:"smooth",block:"start"}); $("entryTitle").focus({preventScroll:true}); }
@@ -333,9 +342,9 @@
     const title = $("entryTitle").value.trim(), content = $("entryContent").value.trim(), entry_date = $("entryDate").value, id = $("editId").value;
     if (!title || !content || !entry_date || title.length>120 || content.length>20000) { showSaveMessage("Maydonlarni to‘g‘ri to‘ldiring.",true); return; }
     const ownerId = currentUser.id, seq = sessionSequence;
-    const photoFile=$("entryPhoto").files[0];
+    const photoFile=pendingPhoto;
     if(photoFile && (!["image/jpeg","image/png","image/webp"].includes(photoFile.type)||photoFile.size>5242880)){showSaveMessage("Surat JPG/PNG/WebP va 5 MB dan kichik bo‘lsin.",true);return;}
-    const metadata={mood:$("entryMood").value||null,tags:tagsFromInput(),pinned:$("entryPinned").checked,private_only:$("entryPrivate").checked};
+    const metadata={tags:tagsFromInput(),pinned:$("entryPinned").checked,private_only:$("entryPrivate").checked};
     setEditorBusy(true); showSaveMessage("Saqlanmoqda...");
     try {
       let result;
@@ -367,11 +376,11 @@
       const seq = sessionSequence, detail = ++detailSequence, ownerId = currentUser.id;
       setEditorBusy(true); showSaveMessage("Yozuv ochilmoqda...");
       try {
-        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at,mood,tags,pinned,private_only,photo_path").eq("id",id).eq("user_id",ownerId).single();
+        const {data,error} = await client.from("diary_entries").select("id,title,content,entry_date,created_at,tags,pinned,private_only,photo_path").eq("id",id).eq("user_id",ownerId).single();
         if (seq !== sessionSequence || ownerId !== currentUser?.id || detail !== detailSequence) return;
         if (error || !data) throw error || new Error("Yozuv topilmadi.");
         if (edit) {
-          moodManuallySet=!!data.mood;$("entryMood").value=data.mood||"";$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;$("entryPrivate").checked=!!data.private_only;
+           clearPendingPhoto();$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;$("entryPrivate").checked=!!data.private_only;
           $("editId").value = String(data.id); $("entryTitle").value = data.title; $("entryContent").value = data.content; $("entryDate").value = data.entry_date;
           $("editorTitle").textContent = "Yozuvni tahrirlash"; $("saveBtn").textContent = "Yangilash";
           formSnapshot = editorSnapshot(); updateWordCount(); openEditor();

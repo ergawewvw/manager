@@ -222,10 +222,9 @@
           <label for="entryDate">Sana</label>
           <input id="entryDate" type="date" required>
           <section class="diary-extensions" aria-label="Post sozlamalari">
-<label for="entryMood">Kayfiyat</label><select id="entryMood"><option value="">Tanlanmagan</option><option value="great">🤩 Ajoyib</option><option value="good">🙂 Yaxshi</option><option value="okay">😐 Oddiy</option><option value="bad">😔 Yomon</option><option value="awful">😞 Juda yomon</option></select><p id="moodSuggestion" class="hint" aria-live="polite">Matn yozsangiz, kayfiyat avtomatik tavsiya qilinadi. Bu taxminiy tahlil; istasangiz o‘zgartiring.</p>
 <label for="entryTags">Teglar (vergul bilan ajrating)</label><input id="entryTags" maxlength="240" placeholder="school, ideas, life">
 <label><input id="entryPrivate" type="checkbox" style="width:auto"> 🔒 Faqat men (mehmonlar ko‘rmaydi)</label><label><input id="entryPinned" type="checkbox" style="width:auto"> 📌 Yuqoriga mahkamlash</label>
-</section><label for="entryPhoto">Surat biriktirish (JPG, PNG, WebP · 5 MB gacha)</label><input id="entryPhoto" type="file" accept="image/jpeg,image/png,image/webp"><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
+</section><label for="entryPhoto">Surat biriktirish (JPG, PNG, WebP · 5 MB gacha)</label><input id="entryPhoto" type="file" accept="image/jpeg,image/png,image/webp"><p class="hint">Yozayotganingizda rasmni Ctrl+V orqali qo‘yishingiz ham mumkin. Hozircha bitta rasm (5 MB gacha).</p><div id="photoPreview" class="hidden" style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:12px"><img id="photoPreviewImage" alt="Biriktirilayotgan rasm" style="max-width:140px;max-height:120px;object-fit:contain;border-radius:8px"><div style="flex:1;min-width:140px"><p id="photoPreviewName" class="hint"></p><button id="removePhotoBtn" type="button" class="btn">Rasmni olib tashlash</button></div></div><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
           <textarea id="entryContent" maxlength="20000" placeholder="Bugun nimalar bo‘ldi?..." required></textarea>
           <div class="actions">
             <button class="btn primary" id="saveBtn" type="submit">Saqlash</button>
@@ -250,6 +249,6 @@
   </main>
 </div>
 
-<script src="./app.js?v=20261030-mood-infer" defer></script>
+<script src="./app.js?v=20261031-clipboard-photo" defer></script>
 </body>
 </html>

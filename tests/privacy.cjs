@@ -49,7 +49,7 @@ window.supabase = {createClient: () => ({
 function element(classes = '') {
   const tokens = new Set(classes.split(/\s+/).filter(Boolean));
   return {
-    value:'',textContent:'',innerHTML:'',disabled:false,style:{},handlers:{},children:[],
+    value:'',textContent:'',innerHTML:'',disabled:false,style:{},handlers:{},children:[],files:[],
     classList:{add:v=>tokens.add(v),remove:v=>tokens.delete(v),contains:v=>tokens.has(v),toggle(v,on){if(on===undefined)on=!tokens.has(v);on?tokens.add(v):tokens.delete(v);}},
     addEventListener(type,handler){this.handlers[type]=handler;},
     async fire(type){return this.handlers[type]?.({preventDefault(){},target:this});},
@@ -80,6 +80,32 @@ function page(file, mode = 'normal', setup = () => {}) {
   return {context,handlers,get:id=>elements.get(id),hidden:id=>elements.get(id).classList.contains('hidden')};
 }
 const settle = () => new Promise(resolve=>setImmediate(resolve));
+test('pasted screenshot is previewed without replacing typed text', async () => {
+  const p=page('index.html'); await settle();
+  p.get('entryContent').value='This diary entry stays intact.';
+  const image=new Blob(['image'],{type:'image/png'});
+  let prevented=false;
+  await p.get('entryContent').handlers.paste({clipboardData:{items:[{kind:'file',type:'image/png',getAsFile:()=>image}]},preventDefault(){prevented=true;}});
+  assert.equal(prevented,true);
+  assert.equal(p.get('entryContent').value,'This diary entry stays intact.');
+  assert.equal(p.hidden('photoPreview'),false);
+  assert.match(p.get('photoPreviewImage').src,/^blob:/);
+  await p.get('removePhotoBtn').fire('click');
+  assert.equal(p.hidden('photoPreview'),true);
+  assert.equal(p.get('photoPreviewImage').src,'');
+});
+test('ordinary text paste still works', async () => {
+  const p=page('index.html'); await settle();
+  let prevented=false;
+  await p.get('entryContent').handlers.paste({clipboardData:{items:[{kind:'string',type:'text/plain'}]},preventDefault(){prevented=true;}});
+  assert.equal(prevented,false);
+});
+test('mood tracker UI and logic are gone', async () => {
+  const p=page('index.html'); await settle();
+  assert.equal(p.get('entryMood'),undefined);
+  assert.equal(p.get('moodSuggestion'),undefined);
+  assert.doesNotMatch(fs.readFileSync(path.join(root,'app.js'),'utf8'),/\bmood\b|\bmoodNames\b|\binferMood\b/i);
+});
 test('session expiry clears notes, editor draft, search and owner identity', async () => {
   const p=page('index.html');await settle();assert.equal(p.hidden('appView'),false);
   for(const id of ['entryTitle','entryContent','searchInput'])p.get(id).value='Private draft';
