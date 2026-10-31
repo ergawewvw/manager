@@ -1,6 +1,6 @@
 "use strict";
 const CACHE="daily-diary-shell-v1-20261031";
-const PATHS=["","index.html","offline.html","offline.js","drafts.js","features.js","app.js","assets/vendor/supabase-2.118.0.js","assets/logo.png","assets/favicon.png","design.css","privacy.css","privacy.js","comments.css","comments.js","manifest.webmanifest","favicon.ico"];
+const PATHS=["","index.html","offline.html","offline.js","drafts.js","features.js","app.js","assets/vendor/supabase-2.118.0.js","assets/logo.png","assets/favicon.png","assets/icon-192.png","assets/icon-512.png","design.css","privacy.css","privacy.js","comments.css","comments.js","manifest.webmanifest","favicon.ico"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(PATHS.map(p=>"./"+p))).then(()=>self.skipWaiting())));
 self.addEventListener("activate",e=>e.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(x=>x.startsWith("daily-diary-shell-")&&x!==CACHE).map(x=>caches.delete(x)))),self.clients.claim()])));
 self.addEventListener("fetch",e=>{
