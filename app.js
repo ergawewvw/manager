@@ -22,6 +22,7 @@
   let stats = { total:0, today:0, month:0 }, backupBusy = false, recoveryMode = false;
   let authBusy = false, emailCooldownUntil = 0;
   let readerComments = null;
+  const features=window.DiaryFeatures?.init({client,getUser:()=>currentUser,diaryMarkup});
   let pendingPhoto = null, pendingPhotoUrl = null;
   const redirectUrl = () => new URL("./index.html", window.location.href).href;
   function localDate() {
@@ -60,7 +61,7 @@
     };
     return messages[error?.code] || (error?.name === "TimeoutError" ? "So‘rov vaqti tugadi. Internetni tekshirib, qayta urinib ko‘ring." : error?.message || "Ulanishda xatolik. Qayta urinib ko‘ring.");
   }
-  function editorSnapshot() { return JSON.stringify([$("editId").value,$("entryTitle").value,$("entryDate").value,$("entryContent").value,pendingPhoto ? [pendingPhoto.name,pendingPhoto.size,pendingPhoto.type,pendingPhoto.lastModified] : null]); }
+  function editorSnapshot() { return JSON.stringify([$("editId").value,$("entryTitle").value,$("entryDate").value,$("entryContent").value,pendingPhoto ? [pendingPhoto.name,pendingPhoto.size,pendingPhoto.type,pendingPhoto.lastModified] : null,features?.signature()||[]]); }
   function hasDraft() { return formSnapshot !== editorSnapshot(); }
   function mayDiscard() { return !hasDraft() || confirm("Saqlanmagan o‘zgarishlar bor. Ularni bekor qilasizmi?"); }
   function updateWordCount() {
@@ -91,7 +92,7 @@
     $("readerCard").classList.add("hidden");
   }
   function clearPrivateState() {
-    sessionSequence++; fetchSequence++; backupSequence++;
+    features?.beforeClear();sessionSequence++; fetchSequence++; backupSequence++;
     clearTimeout(searchTimer);
     currentUser = null; entries = []; stats = { total:0,today:0,month:0 };
     cursor = null; pageHistory = []; hasMore = false; loadingEntries = false; backupBusy = false; recoveryMode = false;
@@ -197,6 +198,7 @@
       $("pageTitle").textContent = "Shaxsiy kundaligim";
       $("todayLabel").textContent = new Date().toLocaleDateString("uz-UZ",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
       await Promise.all([loadEntries({reset:true}),updateAdminUI()]);
+      if(seq===sessionSequence&&currentUser?.id)await features?.login(currentUser);
     } catch (error) { if (seq === sessionSequence) { clearPrivateState(); showMessage(authError(error),true); } }
   }
   async function loadEntries({reset = false} = {}) {
@@ -229,7 +231,7 @@
     if (!entries.length) $("entriesList").innerHTML = stats.total
       ? '<div class="empty">Qidiruvga mos yozuv topilmadi. Qidiruv yoki oy filtrini o‘zgartiring.</div>'
       : '<div class="empty">📔<p>Hozircha yozuv yo‘q.</p><small>Birinchi kundalik yozuvingizni yarating!</small></div>';
-    else $("entriesList").innerHTML = entries.map(e => `<article class="entry"><div class="entry-head"><div><h3>${escapeHTML(e.title)}</h3><div class="entry-date">${escapeHTML(formatDate(e.entry_date))} · ${escapeHTML(postedAt(e.created_at))} · ${escapeHTML(entryExtras(e))}</div></div></div><div class="entry-content">${escapeHTML(e.preview ?? e.content ?? "")}${e.truncated ? "…" : ""}</div><div class="actions"><button class="small" data-read="${escapeHTML(e.id)}">To‘liq o‘qish</button><button class="small" data-edit="${escapeHTML(e.id)}">Tahrirlash</button><button class="small delete" data-delete="${escapeHTML(e.id)}">O‘chirish</button></div></article>`).join("");
+    else $("entriesList").innerHTML = entries.map(e => `<article class="entry"><div class="entry-head"><div><h3>${escapeHTML(e.title)}</h3><div class="entry-date">${escapeHTML(formatDate(e.entry_date))} · ${escapeHTML(postedAt(e.created_at))} · ${escapeHTML(entryExtras(e))}</div></div></div><div class="entry-content">${escapeHTML(String(e.preview ?? e.content ?? "").replace(/\[\[(?:img|photo)\|[^\]]+\]\]/g,"🖼️"))}${e.truncated ? "…" : ""}</div><div class="actions"><button class="small" data-read="${escapeHTML(e.id)}">To‘liq o‘qish</button><button class="small" data-edit="${escapeHTML(e.id)}">Tahrirlash</button><button class="small delete" data-delete="${escapeHTML(e.id)}">O‘chirish</button></div></article>`).join("");
     updateControls();
   }
 
@@ -331,7 +333,7 @@
   });
 
   function resetForm() {
-    $("entryForm").reset(); clearPendingPhoto(); $("editId").value = ""; $("entryDate").value = localDate();
+    features?.reset();$("entryForm").reset(); clearPendingPhoto(); $("editId").value = ""; $("entryDate").value = localDate();
     $("editorTitle").textContent = "Yangi yozuv"; $("saveBtn").textContent = "Saqlash";
     $("entryTags").value="";$("entryPinned").checked=false;$("entryPrivate").checked=false;
     showSaveMessage(""); formSnapshot = editorSnapshot(); updateWordCount();
@@ -345,11 +347,18 @@
     const photoFile=pendingPhoto;
     if(photoFile && (!["image/jpeg","image/png","image/webp"].includes(photoFile.type)||photoFile.size>5242880)){showSaveMessage("Surat JPG/PNG/WebP va 5 MB dan kichik bo‘lsin.",true);return;}
     const metadata={tags:tagsFromInput(),pinned:$("entryPinned").checked,private_only:$("entryPrivate").checked};
+    if(typeof navigator!=="undefined"&&!navigator.onLine){
+      if(id){await features?.persist();showSaveMessage("Tahrir qoralamada saqlandi. Internet qaytganda yangilang.");return;}
+      try{if(!features)throw new Error("Offline modul yuklanmadi.");await features.queueOffline({title,content,date:entry_date,...metadata});resetForm();showSaveMessage("Post offline navbatga saqlandi. Internet qaytganda sinxronlanadi.");}
+      catch(error){showSaveMessage("Offline saqlashda xato: "+authError(error),true);}return;
+    }
     setEditorBusy(true); showSaveMessage("Saqlanmoqda...");
     try {
+      const finalContent=features?await features.prepare(content,ownerId):content;
+      if(seq!==sessionSequence||ownerId!==currentUser?.id)return;
       let result;
-      if (id) result = await client.from("diary_entries").update({title,content,entry_date,...metadata,updated_at:new Date().toISOString()}).eq("id",id).eq("user_id",ownerId).select("id");
-      else result = await client.from("diary_entries").insert({title,content,entry_date,...metadata,user_id:ownerId}).select("id");
+      if (id) result = await client.from("diary_entries").update({title,content:finalContent,entry_date,...metadata,updated_at:new Date().toISOString()}).eq("id",id).eq("user_id",ownerId).select("id");
+      else result = await client.from("diary_entries").insert({title,content:finalContent,entry_date,...metadata,user_id:ownerId}).select("id");
       if (seq !== sessionSequence || ownerId !== currentUser?.id) return;
       if (result.error) throw result.error;
       if (!result.data?.length) throw new Error("Yozuv o‘zgarmadi. Qayta urinib ko‘ring.");
@@ -362,7 +371,7 @@
         const linked=await client.from("diary_entries").update({photo_path:path}).eq("id",entryId).eq("user_id",ownerId);
         if(linked.error)throw new Error("Post saqlandi, lekin surat biriktirilmadi: "+linked.error.message);
       }
-      resetForm(); await loadEntries({reset:true});renderInsights();
+      await features?.saved();resetForm(); await loadEntries({reset:true});renderInsights();
       if (seq === sessionSequence && ownerId === currentUser?.id) showSaveMessage("Yozuv saqlandi ✓");
     } catch (error) { if (seq === sessionSequence && ownerId === currentUser?.id) showSaveMessage(authError(error),true); }
     finally { setEditorBusy(false,seq); }
@@ -383,9 +392,9 @@
            clearPendingPhoto();$("entryTags").value=(data.tags||[]).join(", ");$("entryPinned").checked=!!data.pinned;$("entryPrivate").checked=!!data.private_only;
           $("editId").value = String(data.id); $("entryTitle").value = data.title; $("entryContent").value = data.content; $("entryDate").value = data.entry_date;
           $("editorTitle").textContent = "Yozuvni tahrirlash"; $("saveBtn").textContent = "Yangilash";
-          formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
+          features?.edited();formSnapshot = editorSnapshot(); updateWordCount(); openEditor();
         } else {
-          currentReadId=String(data.id);$("historyPanel").classList.add("hidden"); $("readerTitle").textContent = (data.pinned?"📌 ":"")+data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at) + " · " + entryExtras(data); $("readerContent").innerHTML = diaryMarkup(data.content);
+          currentReadId=String(data.id);$("historyPanel").classList.add("hidden"); $("readerTitle").textContent = (data.pinned?"📌 ":"")+data.title; $("readerDate").textContent = formatDate(data.entry_date) + " · " + postedAt(data.created_at) + " · " + entryExtras(data); if(features)features.renderReader(data.content,$("readerContent"),ownerId);else $("readerContent").innerHTML = diaryMarkup(data.content);
           $("readerPhoto").replaceChildren();
           if(data.photo_path){
             const photo=await client.storage.from("diary-photos").createSignedUrl(data.photo_path,120);
@@ -501,8 +510,8 @@
       }
     } finally { endBackup(job); }
   });
-  $("newBtn").addEventListener("click", () => { if (!busy && mayDiscard()) { detailSequence++; resetForm(); openEditor(); } });
-  $("cancelBtn").addEventListener("click", () => { if (!busy && mayDiscard()) { detailSequence++; resetForm(); } });
+  $("newBtn").addEventListener("click", () => { if (!busy && mayDiscard()) { features?.discard();detailSequence++; resetForm(); openEditor(); } });
+  $("cancelBtn").addEventListener("click", () => { if (!busy && mayDiscard()) { features?.discard();detailSequence++; resetForm(); } });
   document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => {
     if (button.dataset.view === "write" && (busy || !mayDiscard())) return;
     document.querySelectorAll("[data-view]").forEach(b => b.classList.remove("active")); button.classList.add("active");

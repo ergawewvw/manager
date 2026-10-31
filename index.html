@@ -7,9 +7,10 @@
 <meta name="robots" content="index,follow">
   <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://pmdgnhkbmarvtvfprdsy.supabase.co wss://pmdgnhkbmarvtvfprdsy.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://pmdgnhkbmarvtvfprdsy.supabase.co wss://pmdgnhkbmarvtvfprdsy.supabase.co; img-src 'self' data: blob: https://pmdgnhkbmarvtvfprdsy.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1020">
+  <link rel="manifest" href="./manifest.webmanifest">
   <title>Daily Diary</title>
   <script src="./assets/vendor/supabase-2.118.0.js" defer></script>
   <style>
@@ -210,7 +211,7 @@
       <div class="card"><div class="stat-label">Shu oy</div><div class="stat-number" id="monthStat">0</div></div>
     </section>
 
-    <section class="card" id="diaryInsights" style="margin-bottom:18px"><h2>📅 Kundalik kalendari</h2><div class="diary-extras"><button type="button" id="calendarPrev" class="btn">←</button><strong id="calendarHeading"></strong><button type="button" id="calendarNext" class="btn">→</button></div><div id="calendarGrid" class="diary-calendar"></div><h3>📊 Yozuv statistikasi</h3><div class="diary-summary" id="diaryStats"></div><div id="onThisDay"></div></section><section id="readerCard" class="card hidden" style="margin-bottom:18px"><h2 id="readerTitle"></h2><p id="readerDate" class="muted"></p><p id="readerContent" class="entry-content"></p><div id="readerPhoto"></div><div class="diary-extras"><button id="printDiaryBtn" class="btn" type="button">PDF / Chop etish</button><button id="historyBtn" class="btn" type="button">Versiyalar tarixi</button></div><div id="historyPanel" class="hidden"></div><div id="readerComments"></div><button id="closeReaderBtn" class="btn" type="button">Yopish</button></section>
+    <section class="card" id="diaryInsights" style="margin-bottom:18px"><h2>📅 Kundalik kalendari</h2><div class="diary-extras"><button type="button" id="calendarPrev" class="btn">←</button><strong id="calendarHeading"></strong><button type="button" id="calendarNext" class="btn">→</button></div><div id="calendarGrid" class="diary-calendar"></div><h3>📊 Yozuv statistikasi</h3><div class="diary-summary" id="diaryStats"></div><div id="onThisDay"></div></section><section id="readerCard" class="card hidden" style="margin-bottom:18px"><h2 id="readerTitle"></h2><p id="readerDate" class="muted"></p><div id="readerContent" class="entry-content"></div><div id="readerPhoto"></div><div class="diary-extras"><button id="printDiaryBtn" class="btn" type="button">PDF / Chop etish</button><button id="historyBtn" class="btn" type="button">Versiyalar tarixi</button></div><div id="historyPanel" class="hidden"></div><div id="readerComments"></div><button id="closeReaderBtn" class="btn" type="button">Yopish</button></section>
     <div class="workspace">
       <section class="card" id="editorCard">
         <h2 class="section" id="editorTitle">Yangi yozuv</h2>
@@ -224,13 +225,13 @@
           <section class="diary-extensions" aria-label="Post sozlamalari">
 <label for="entryTags">Teglar (vergul bilan ajrating)</label><input id="entryTags" maxlength="240" placeholder="school, ideas, life">
 <label><input id="entryPrivate" type="checkbox" style="width:auto"> 🔒 Faqat men (mehmonlar ko‘rmaydi)</label><label><input id="entryPinned" type="checkbox" style="width:auto"> 📌 Yuqoriga mahkamlash</label>
-</section><label for="entryPhoto">Surat biriktirish (JPG, PNG, WebP · 5 MB gacha)</label><input id="entryPhoto" type="file" accept="image/jpeg,image/png,image/webp"><p class="hint">Yozayotganingizda rasmni Ctrl+V orqali qo‘yishingiz ham mumkin. Hozircha bitta rasm (5 MB gacha).</p><div id="photoPreview" class="hidden" style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:12px"><img id="photoPreviewImage" alt="Biriktirilayotgan rasm" style="max-width:140px;max-height:120px;object-fit:contain;border-radius:8px"><div style="flex:1;min-width:140px"><p id="photoPreviewName" class="hint"></p><button id="removePhotoBtn" type="button" class="btn">Rasmni olib tashlash</button></div></div><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
-          <textarea id="entryContent" maxlength="20000" placeholder="Bugun nimalar bo‘ldi?..." required></textarea>
+</section><label for="entryPhoto">Surat biriktirish (JPG, PNG, WebP · 5 MB gacha)</label><input id="entryPhoto" type="file" multiple accept="image/jpeg,image/png,image/webp"><p class="hint">Kursorni kerakli joyga qo‘yib Ctrl+V bosing yoki rasmlar tanlang. 8 tagacha, har biri 5 MB. Pastdagi ko‘rinishda rasmlarning joylashuvini tekshiring.</p><div id="photoPreview" class="hidden" style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:12px"><img id="photoPreviewImage" alt="Biriktirilayotgan rasm" style="max-width:140px;max-height:120px;object-fit:contain;border-radius:8px"><div style="flex:1;min-width:140px"><p id="photoPreviewName" class="hint"></p><button id="removePhotoBtn" type="button" class="btn">Rasmni olib tashlash</button></div></div><label for="entryContent">Kundalik</label><div class="diary-toolbar" aria-label="Matn formatlash"><button type="button" data-mark="bold"><b>B</b></button><button type="button" data-mark="italic"><i>I</i></button><button type="button" data-mark="heading">H</button><button type="button" data-mark="list">• List</button></div>
+          <textarea id="entryContent" maxlength="20000" placeholder="Bugun nimalar bo‘ldi?..." required></textarea><div id="inlinePreview" class="hidden" style="border:1px solid var(--border);border-radius:12px;padding:12px;margin:12px 0" aria-label="Rasmli yozuvning oldindan ko‘rinishi"></div><p class="hint">Rasm enini + yoki − orqali o‘zgartiring. Tartiblash uchun matndagi rasm belgilarini boshqa joyga ko‘chiring.</p>
           <div class="actions">
             <button class="btn primary" id="saveBtn" type="submit">Saqlash</button>
             <button class="btn" id="cancelBtn" type="button">Bekor qilish</button>
           </div>
-          <p id="wordCount" class="notice" aria-live="polite">0 ta so‘z · 0 belgi</p>
+          <p id="draftStatus" class="hint" role="status">Qoralamalar qurilmada avtomatik saqlanadi.</p><p><a href="./offline.html" class="btn" style="display:inline-block;text-decoration:none">📴 Offline yozish</a></p><p id="wordCount" class="notice" aria-live="polite">0 ta so‘z · 0 belgi</p>
           <div id="saveMessage" class="notice" role="status"></div>
         </form>
       </section>
@@ -249,6 +250,8 @@
   </main>
 </div>
 
-<script src="./app.js?v=20261031-clipboard-photo" defer></script>
+<script src="./drafts.js?v=20261031-v1" defer></script>
+<script src="./features.js?v=20261031-v1" defer></script>
+<script src="./app.js?v=20261031-inline-offline-v1" defer></script>
 </body>
 </html>
